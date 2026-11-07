@@ -164,6 +164,7 @@ body.dark{--hs-ink:#e2ece1;--hs-muted:#b0c1b2;--hs-paper:#16271f;--hs-card:#2137
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
 @media print{.hs-header{display:none}body{background:white}.container{padding:0}.card{break-inside:avoid}}
 </style>
+<style id="site-language-style">.site-language-label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--hs-muted,#647b75);flex-wrap:wrap}.site-language-label select{font:inherit;padding:8px;border:1px solid #b7cbbc;border-radius:8px;background:var(--hs-card,#fff);color:var(--hs-ink,#173d37);max-width:100%}.header .nav{align-items:center;flex-wrap:wrap}.header{flex-wrap:wrap}#site-language-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}html[lang=hi] body,html[lang=gu] body{line-height:1.8}.navbar h1{overflow-wrap:anywhere}.radio-group label{max-width:100%}select{max-width:100%}@media(max-width:600px){.header .nav{gap:12px}.site-language-label{width:100%}.navbar .right{width:100%}.risk-header{flex-wrap:wrap}.strip-name,.strip-level{overflow-wrap:anywhere}.stat-card .label{overflow-wrap:anywhere}.mode-btn{white-space:normal}.tabs .tab-btn{min-width:0}.hs-nav{flex-wrap:wrap}.hs-header{align-items:flex-start}.hs-brand{white-space:nowrap}}</style>
 </head>
 <body class="beginner">
 <header class="hs-header"><a class="hs-brand" href="./index.html" aria-label="HealthScreen homepage"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12h5l3-8 4 16 3-8h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>HealthScreen</a><nav class="hs-nav" aria-label="Site navigation"><a href="./index.html#screeners">All screeners</a><a href="./index.html#languages">Languages</a><a href="./index.html#about">About</a></nav></header>
@@ -179,19 +180,7 @@ body.dark #health-page-translation{background:#223346;color:#edf4ff;border-color
 body.dark #health-page-translation a{color:#9bd3ff}
 @media print{#health-page-translation{display:none}}
 </style>
-<details id="health-page-translation">
-  <summary>🌐 Translate the whole page · Free, no API key</summary>
-  <p>Use the translation built into <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> to translate questions, explanations and results.</p>
-  <ol style="margin:10px 0 10px 22px">
-    <li>Open this page in Chrome or Edge.</li>
-    <li>Right-click an empty area and choose <strong>Translate</strong>, or choose Translate in the browser's menu.</li>
-    <li>Choose your language in the translation pop-up. Restore the original from that same pop-up.</li>
-  </ol>
-  <p>If this app's browser has no Translate menu, copy this page's address into Chrome or Edge. This page cannot open the browser's translation menu automatically.</p>
-  <p>The existing language selector still provides offline result translations in English, Hindi, Gujarati and Spanish.</p>
-  <p style="font-size:12px">Languages depend on your browser. Browser translation is handled by its provider; machine translations can contain errors. If an updated result stays untranslated, translate the page again.</p>
-  <p><a href="./index.html#languages">Translation help &amp; home</a></p>
-</details>
+<details id="health-page-translation"><summary>Built-in languages</summary><p>Choose a language above. Questions, explanations and results translate on this device, with no account or API key.</p><p>English, Spanish, Hindi and Gujarati are included. Your choice is remembered in this browser when storage is available.</p><p>These built-in translations have not been reviewed by a medical translator. If wording is unclear, switch to English and ask a healthcare professional.</p><a href="./index.html#languages">Translation help &amp; home</a></details>
 <!-- HEALTH_PAGE_TRANSLATION_END -->
 
 
@@ -202,12 +191,7 @@ body.dark #health-page-translation a{color:#9bd3ff}
       <button class="mode-btn active" id="btn-beginner" onclick="setMode('beginner')">Home</button>
       <button class="mode-btn" id="btn-expert" onclick="setMode('expert')">Expert</button>
     </div>
-    <select class="lang-select" id="lang-select" onchange="onLangChange()" title="Result card language">
-      <option value="en">English</option>
-      <option value="hi">हिन्दी (Hindi)</option>
-      <option value="gu">ગુજરાતી (Gujarati)</option>
-      <option value="es">Espa&ntilde;ol</option>
-    </select>
+    <select class="lang-select" id="lang-select" onchange="onLangChange()" title="Website language" aria-label="Website language"><option value="en" lang="en">English</option><option value="es" lang="es">Español</option><option value="hi" lang="hi">हिन्दी</option><option value="gu" lang="gu">ગુજરાતી</option></select>
     <span class="badge">Logistic Regression | 253,680 US adults (CDC BRFSS 2015)</span>
   </div>
 </div>
@@ -835,5 +819,7 @@ applyPreset('default');
 setMode('beginner');
 </script>
 
+<span id="site-language-status" role="status" aria-live="polite"></span>
+<script src="./site-i18n.js"></script>
 </body>
 </html>
