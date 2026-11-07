@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diabetes Risk Screener</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f4f8; color: #1a202c; transition: background 0.3s, color 0.3s; }
+
+  /* ===== DARK MODE ===== */
+  body.dark { background: #1a202c; color: #e2e8f0; }
+  body.dark .navbar { background: linear-gradient(135deg, #0f1f33, #1a3a5c); }
+  body.dark .card, body.dark .how-to-measure, body.dark .ai-section, body.dark .info-card { background: #2d3748; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  body.dark .card h2, body.dark .how-to-measure h2, body.dark .ai-section h2, body.dark .info-section h2, body.dark .info-card h3 { color: #90cdf4; }
+  body.dark .form-group > label:first-child { color: #cbd5e0; }
+  body.dark .form-group .hint { color: #718096; }
+  body.dark .form-group .home-hint { color: #63b3ed; }
+  body.dark .warning-banner { background: #744210; border-color: #975a16; }
+  body.dark .warning-banner p { color: #fefcbf; }
+  body.dark .beginner-note { background: #1a365d; border-color: #2a4365; color: #bee3f8; }
+  body.dark .beginner-note strong { color: #90cdf4; }
+  body.dark .stat-card { background: #1a202c; }
+  body.dark .stat-card .label { color: #718096; }
+  body.dark .data-sources { background: #1a202c; }
+  body.dark .data-sources h3 { color: #cbd5e0; }
+  body.dark .data-sources ul { color: #a0aec0; }
+  body.dark .disclaimer { background: #1a202c; color: #a0aec0; }
+  body.dark .factor-item { border-bottom-color: #4a5568; }
+  body.dark .factor-item span:first-child { color: #e2e8f0; }
+  body.dark #next-steps-box { background: #1a365d; color: #bee3f8; }
+  body.dark .risk-bar-bg { background: #4a5568; }
+  body.dark .risk-bar-labels { color: #718096; }
+  body.dark .measure-card { background: #1a202c; }
+  body.dark .measure-card h3 { color: #63b3ed; }
+  body.dark .measure-card .step span:last-child { color: #cbd5e0; }
+  body.dark .measure-card .equipment { color: #a0aec0; }
+  body.dark .measure-card .tip { background: #744210; border-color: #975a16; color: #fefcbf; }
+  body.dark .ai-placeholder { background: #1a202c; border-color: #4a5568; }
+  body.dark .ai-placeholder .ai-badge { background: #1a365d; color: #90cdf4; }
+  body.dark .ai-placeholder .ai-note { color: #718096; }
+  body.dark .ai-example { background: #2d3748; border-color: #4a5568; color: #cbd5e0; }
+  body.dark .ai-example strong { color: #90cdf4; }
+  body.dark .info-card p { color: #a0aec0; }
+  body.dark .lang-notice { background: #2d3748; border-color: #4a5568; color: #a0aec0; }
+  body.dark .slider-row .value { color: #63b3ed; }
+  body.dark footer { color: #4a5568; }
+  body.dark .tips-section { background: #2d3748; }
+  body.dark .tip-item { background: #1a202c; border-color: #4a5568; }
+  body.dark .tip-item strong { color: #fc8181; }
+  body.dark .tip-item p { color: #cbd5e0; }
+  body.dark .comparison-section { background: #2d3748; }
+  body.dark .comparison-section h3 { color: #90cdf4; }
+  body.dark .comp-row .comp-label { color: #cbd5e0; }
+  body.dark .comp-bar-bg { background: #4a5568; }
+  body.dark .comp-val { color: #a0aec0; }
+  body.dark .history-section { background: #2d3748; }
+  body.dark .history-section h3 { color: #90cdf4; }
+  body.dark .history-table { color: #cbd5e0; }
+  body.dark .history-table th { background: #1a202c; color: #a0aec0; }
+  body.dark .history-table td { border-color: #4a5568; }
+  body.dark .history-empty { color: #718096; }
+
+  .navbar { background: linear-gradient(135deg, #1e3a5f, #2d6a9f); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .navbar h1 { color: white; font-size: 1.4rem; }
+  .navbar .right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .navbar .badge { background: rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+
+  .dark-toggle { background: none; border: 2px solid rgba(255,255,255,0.3); color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .dark-toggle:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.5); }
+
+  .mode-toggle { display: flex; background: rgba(255,255,255,0.15); border-radius: 20px; overflow: hidden; }
+  .mode-btn { padding: 6px 16px; border: none; background: none; color: rgba(255,255,255,0.7); font-size: 0.85rem; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+  .mode-btn.active { background: white; color: #1e3a5f; border-radius: 20px; }
+
+  .lang-select { padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.15); color: white; font-size: 0.8rem; cursor: pointer; }
+  .lang-select option { color: #1a202c; background: white; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+  .warning-banner { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
+  .warning-banner .icon { font-size: 1.4rem; }
+  .warning-banner p { font-size: 0.9rem; color: #92400e; }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } }
+
+  .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; }
+  .card h2 { font-size: 1.1rem; margin-bottom: 16px; color: #1e3a5f; }
+
+  .form-group { margin-bottom: 14px; transition: opacity 0.3s; }
+  .form-group.hidden { display: none; }
+  .form-group > label:first-child { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #4a5568; }
+  .form-group .hint { font-size: 0.75rem; color: #a0aec0; margin-bottom: 4px; }
+  .form-group .home-hint { font-size: 0.75rem; color: #2d6a9f; margin-bottom: 4px; font-style: italic; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row input[type="range"] { flex: 1; accent-color: #2d6a9f; height: 6px; }
+  .slider-row .value { min-width: 45px; text-align: right; font-weight: 600; color: #2d6a9f; font-size: 0.95rem; }
+  .slider-row .status-tag { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; min-width: 65px; text-align: center; }
+  .status-tag.normal { background: #c6f6d5; color: #276749; }
+  .status-tag.warning { background: #fefcbf; color: #975a16; }
+  .status-tag.danger { background: #fed7d7; color: #c53030; }
+
+  .radio-group { display: flex; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+  .radio-group label { display: flex; align-items: center; gap: 5px; font-weight: 400; font-size: 0.9rem; cursor: pointer; }
+
+  .result-box { padding: 20px; border-radius: 8px; transition: all 0.3s ease; }
+  .result-box.low { background: #f0fff4; border: 2px solid #48bb78; }
+  .result-box.moderate { background: #fffff0; border: 2px solid #ecc94b; }
+  .result-box.high { background: #fff5f5; border: 2px solid #fc8181; }
+  body.dark .result-box.low { background: #1c3a2a; border-color: #48bb78; }
+  body.dark .result-box.moderate { background: #3a3520; border-color: #ecc94b; }
+  body.dark .result-box.high { background: #3a1c1c; border-color: #fc8181; }
+
+  .risk-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .risk-circle { width: 72px; height: 72px; min-width: 72px; min-height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 700; color: white; transition: all 0.3s ease; flex-shrink: 0; aspect-ratio: 1; overflow: hidden; }
+  .risk-circle.low { background: #48bb78; }
+  .risk-circle.moderate { background: #ecc94b; color: #744210; }
+  .risk-circle.high { background: #fc8181; }
+  .risk-gauge { width: 88px; height: 88px; min-width: 88px; min-height: 88px; border-radius: 50%; aspect-ratio: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: conic-gradient(#48bb78 0deg, #e2e8f0 0deg); transition: background 0.4s ease; }
+  .risk-label { font-size: 1.3rem; font-weight: 700; }
+  .risk-sublabel { color: #718096; font-size: 0.85rem; margin-top: 2px; }
+
+  .risk-bar-container { margin: 12px 0; }
+  .risk-bar-bg { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; position: relative; }
+  .risk-bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease, background 0.4s ease; }
+  .risk-bar-labels { position: relative; height: 1em; font-size: 0.7rem; color: #a0aec0; margin-top: 4px; }
+  .risk-bar-labels span { position: absolute; top: 0; }
+  .risk-bar-bg::before, .risk-bar-bg::after { content: ''; position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,0.25); z-index: 1; }
+  .risk-bar-bg::before { left: 7%; }
+  .risk-bar-bg::after { left: 14.5%; }
+
+  .factors { margin-top: 16px; }
+  .factors h3 { font-size: 0.95rem; margin-bottom: 8px; color: #4a5568; }
+  .factor-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #edf2f7; font-size: 0.85rem; }
+  .factor-item .tag { padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
+  .tag.risk { background: #fed7d7; color: #c53030; }
+  .tag.warn { background: #fefcbf; color: #975a16; }
+  .tag.ok { background: #c6f6d5; color: #276749; }
+
+  .disclaimer { margin-top: 16px; padding: 12px; background: #edf2f7; border-radius: 6px; font-size: 0.78rem; color: #718096; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: #f7fafc; border-radius: 8px; padding: 14px; text-align: center; }
+  .stat-card .num { font-size: 1.5rem; font-weight: 700; color: #2d6a9f; }
+  .stat-card .label { font-size: 0.72rem; color: #a0aec0; margin-top: 2px; }
+
+  .data-sources { margin-top: 12px; padding: 12px; background: #f7fafc; border-radius: 8px; }
+  .data-sources h3 { font-size: 0.85rem; color: #4a5568; margin-bottom: 6px; }
+  .data-sources ul { list-style: none; font-size: 0.78rem; color: #718096; }
+  .data-sources li { padding: 2px 0; }
+  .data-sources li::before { content: ''; display: inline-block; width: 6px; height: 6px; background: #2d6a9f; border-radius: 50%; margin-right: 6px; }
+
+  .right-col { position: sticky; top: 24px; }
+
+  .beginner-note { background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 8px; padding: 14px; margin-bottom: 16px; font-size: 0.85rem; color: #2a4365; line-height: 1.6; }
+  .beginner-note strong { color: #1e3a5f; }
+
+  .how-to-measure { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; margin-top: 24px; }
+  .how-to-measure h2 { font-size: 1.1rem; color: #1e3a5f; margin-bottom: 16px; }
+  .measure-card { background: #f7fafc; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .measure-card h3 { font-size: 0.95rem; color: #2d6a9f; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .measure-card .step { display: flex; gap: 10px; padding: 6px 0; font-size: 0.85rem; color: #4a5568; line-height: 1.5; }
+  .measure-card .step-num { background: #2d6a9f; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+  .measure-card .tip { background: #fffff0; border-left: 3px solid #ecc94b; padding: 8px 12px; margin-top: 8px; font-size: 0.8rem; color: #975a16; border-radius: 0 4px 4px 0; }
+  .measure-card .equipment { font-size: 0.8rem; color: #718096; margin-bottom: 8px; }
+
+  .info-section { margin-top: 24px; }
+  .info-section h2 { font-size: 1.1rem; color: #1e3a5f; margin-bottom: 12px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-card { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .info-card h3 { font-size: 0.9rem; color: #2d6a9f; margin-bottom: 6px; }
+  .info-card p { font-size: 0.82rem; color: #718096; line-height: 1.5; }
+
+  footer { text-align: center; padding: 24px; color: #a0aec0; font-size: 0.8rem; }
+
+  .beginner-only { display: none; }
+  .expert-only { display: block; }
+  body.beginner .beginner-only { display: block; }
+  body.beginner .expert-only { display: none; }
+
+  .ai-section { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; margin-top: 24px; }
+  .ai-section h2 { font-size: 1.1rem; color: #1e3a5f; margin-bottom: 12px; }
+  .ai-placeholder { background: #f7fafc; border: 2px dashed #cbd5e0; border-radius: 8px; padding: 16px; }
+  .ai-placeholder .ai-badge { display: inline-block; background: #ebf8ff; color: #2d6a9f; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-bottom: 10px; }
+  .ai-placeholder .ai-note { font-size: 0.8rem; color: #a0aec0; font-style: italic; margin-bottom: 12px; }
+  .ai-example { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; font-size: 0.84rem; color: #4a5568; line-height: 1.7; }
+  .ai-example strong { color: #1e3a5f; }
+
+  .lang-notice { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-top: 8px; font-size: 0.8rem; color: #718096; font-style: italic; display: none; }
+
+  /* ===== PERSONALIZED TIPS ===== */
+  .tips-section { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; margin-top: 16px; }
+  .tips-section h3 { font-size: 1rem; color: #1e3a5f; margin-bottom: 12px; }
+  .tip-item { padding: 12px; margin-bottom: 8px; background: #f7fafc; border-radius: 8px; border-left: 4px solid #fc8181; }
+  .tip-item strong { color: #c53030; font-size: 0.85rem; display: block; margin-bottom: 4px; }
+  .tip-item p { font-size: 0.82rem; color: #4a5568; line-height: 1.5; margin: 0; }
+
+  /* ===== RISK COMPARISON CHART ===== */
+  .comparison-section { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; margin-top: 16px; }
+  .comparison-section h3 { font-size: 1rem; color: #1e3a5f; margin-bottom: 14px; }
+  .comp-row { display: flex; align-items: center; margin-bottom: 10px; gap: 10px; }
+  .comp-label { font-size: 0.8rem; color: #4a5568; min-width: 150px; flex-shrink: 0; }
+  .comp-bar-bg { flex: 1; height: 22px; background: #e2e8f0; border-radius: 4px; overflow: hidden; position: relative; }
+  .comp-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; font-size: 0.7rem; font-weight: 700; color: white; min-width: 30px; }
+  .comp-val { font-size: 0.8rem; font-weight: 600; min-width: 40px; text-align: right; color: #4a5568; }
+
+  /* ===== RISK HISTORY TRACKER ===== */
+  .history-section { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; margin-top: 16px; }
+  .history-section h3 { font-size: 1rem; color: #1e3a5f; margin-bottom: 12px; }
+  .save-reading-btn { background: #2d6a9f; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: background 0.2s; margin-bottom: 14px; }
+  .save-reading-btn:hover { background: #1e3a5f; }
+  .save-confirm { display: none; color: #276749; font-size: 0.8rem; margin-left: 10px; font-weight: 600; }
+  .history-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 10px; }
+  .history-table th { text-align: left; padding: 8px 6px; background: #f7fafc; color: #4a5568; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .history-table td { padding: 8px 6px; border-top: 1px solid #e2e8f0; }
+  .trend-up { color: #c53030; font-weight: 700; }
+  .trend-down { color: #276749; font-weight: 700; }
+  .trend-same { color: #975a16; font-weight: 700; }
+  .history-empty { color: #a0aec0; font-size: 0.82rem; font-style: italic; padding: 10px 0; }
+  .clear-history-btn { background: none; border: 1px solid #e2e8f0; color: #a0aec0; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-top: 8px; }
+  .clear-history-btn:hover { border-color: #fc8181; color: #c53030; }
+
+  /* ===== PRINT / SHARE BUTTON ===== */
+  .action-buttons { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .print-btn { background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e0; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+  .print-btn:hover { background: #e2e8f0; border-color: #a0aec0; }
+  body.dark .print-btn { background: #2d3748; color: #cbd5e0; border-color: #4a5568; }
+  body.dark .print-btn:hover { background: #4a5568; }
+
+  /* ===== PRINT STYLES ===== */
+  @media print {
+    body { background: white !important; color: #1a202c !important; }
+    .navbar { background: #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .dark-toggle, .mode-toggle, .lang-select, .badge { display: none !important; }
+    .layout { grid-template-columns: 1fr !important; }
+    .layout > .card:first-child { display: none !important; }
+    .warning-banner { display: none !important; }
+    .beginner-note { display: none !important; }
+    .how-to-measure { display: none !important; }
+    .ai-section { display: none !important; }
+    .info-section { display: none !important; }
+    .lang-notice { display: none !important; }
+    .right-col { position: static !important; }
+    .card:has(.stats-grid) { display: none !important; }
+    .save-reading-btn, .clear-history-btn { display: none !important; }
+    .action-buttons { display: none !important; }
+    .history-section { break-inside: avoid; }
+    .tips-section { break-inside: avoid; }
+    .comparison-section { break-inside: avoid; }
+    .result-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .risk-circle, .risk-gauge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .risk-bar-fill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .status-tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tip-item { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .comp-bar-fill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    footer { display: none !important; }
+    .print-timestamp { display: block !important; font-size: 0.8rem; color: #718096; text-align: center; padding: 16px; }
+  }
+  .print-timestamp { display: none; }
+  /* ===== BRFSS VERSION ADDITIONS ===== */
+  .yn-note { font-size: 0.72rem; color: #a0aec0; margin-top: 2px; }
+  .bmi-calc { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; font-size: 0.8rem; color: #4a5568; }
+  .bmi-calc input[type="number"] { width: 70px; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.8rem; }
+  .bmi-calc select { padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.8rem; }
+  .bmi-calc button { padding: 4px 10px; border: 1px solid #2d6a9f; background: #2d6a9f; color: white; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+  .bmi-calc-msg { font-size: 0.72rem; color: #718096; width: 100%; }
+  .perf-list { font-size: 0.78rem; color: #4a5568; line-height: 1.6; margin-bottom: 8px; }
+  body.dark .bmi-calc { color: #cbd5e0; }
+  body.dark .bmi-calc input[type="number"], body.dark .bmi-calc select { background: #1a202c; color: #e2e8f0; border-color: #4a5568; }
+  body.dark .perf-list { color: #cbd5e0; }
+  body.dark .radio-group label { color: #e2e8f0; }
+</style>
+</head>
+<body>
+<!-- HEALTH_PAGE_TRANSLATION_START -->
+<style>
+#health-page-translation{font:14px/1.5 system-ui,sans-serif;margin:12px auto;padding:12px 16px;max-width:1200px;border:1px solid #bed2e5;border-radius:12px;background:#fff;color:#19324a;text-align:start}
+#health-page-translation summary{cursor:pointer;font-weight:650}
+#health-page-translation .translation-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+#health-page-translation select,#health-page-translation button{font:inherit;border:1px solid #a9bfd2;border-radius:6px;padding:7px 10px;background:white;color:#19324a;max-width:100%}
+#health-page-translation button{cursor:pointer}#health-page-translation button:disabled{opacity:.55;cursor:default}
+#health-page-translation a{color:#155a91}#health-translation-status{margin-top:8px;white-space:pre-wrap}
+body.dark #health-page-translation{background:#223346;color:#edf4ff;border-color:#506579}
+body.dark #health-page-translation a{color:#9bd3ff}
+@media print{#health-page-translation{display:none}}
+</style>
+<details id="health-page-translation">
+  <summary>🌐 Translate the whole page · Free, no API key</summary>
+  <p>Use the translation built into <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> to translate questions, explanations and results.</p>
+  <ol style="margin:10px 0 10px 22px">
+    <li>Open this page in Chrome or Edge.</li>
+    <li>Right-click an empty area and choose <strong>Translate</strong>, or choose Translate in the browser's menu.</li>
+    <li>Choose your language in the translation pop-up. Restore the original from that same pop-up.</li>
+  </ol>
+  <p>If this app's browser has no Translate menu, copy this page's address into Chrome or Edge. This page cannot open the browser's translation menu automatically.</p>
+  <p>The existing language selector still provides offline result translations in English, Hindi, Gujarati and Spanish.</p>
+  <p style="font-size:12px">Languages depend on your browser. Browser translation is handled by its provider; machine translations can contain errors. If an updated result stays untranslated, translate the page again.</p>
+  <p><a href="./index.html#languages">Translation help &amp; home</a></p>
+</details>
+<!-- HEALTH_PAGE_TRANSLATION_END -->
+
+
+<div class="navbar">
+  <h1>Diabetes Risk Screener</h1>
+  <div class="right">
+    <button class="dark-toggle" id="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">&#9789;</button>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-beginner" onclick="setMode('beginner')">Home</button>
+      <button class="mode-btn" id="btn-expert" onclick="setMode('expert')">Expert</button>
+    </div>
+    <select class="lang-select" id="lang-select" onchange="onLangChange()" title="Result card language">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी (Hindi)</option>
+      <option value="gu">ગુજરાતી (Gujarati)</option>
+      <option value="es">Espa&ntilde;ol</option>
+    </select>
+    <span class="badge">Logistic Regression | 253,680 US adults</span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="warning-banner" style="margin-top: 16px;">
+    <span class="icon">!</span>
+    <p><strong>Screening aid only -- not a medical diagnosis.</strong> This tool uses a logistic regression model trained on the CDC BRFSS 2015 health survey (253,680 US adults, men and women, ages 18 to 80+). It estimates how common <strong>diabetes or prediabetes</strong> is among people who answered like you. Always consult a healthcare professional.</p>
+  </div>
+
+  <!-- BEGINNER welcome note -->
+  <div class="beginner-note beginner-only" id="beginner-welcome">
+    <strong>Home Mode</strong> -- 13 everyday questions, no lab tests needed: blood pressure and cholesterol history, BMI, smoking, activity, diet, drinking, general health, sex and age. Switch to Expert mode to see the raw values the model receives and how much each one adds to or subtracts from the score. Both modes use the same model.
+  </div>
+
+  <div class="layout">
+    <!-- LEFT: Input form -->
+    <div class="card">
+      <h2 id="form-title">Your Health Information</h2>
+
+      <!-- === DEMO PRESETS === -->
+      <div class="action-buttons" style="margin-top:0; margin-bottom:16px;">
+        <button class="print-btn" onclick="applyPreset('healthy')">Healthy example</button>
+        <button class="print-btn" onclick="applyPreset('borderline')">Borderline example</button>
+        <button class="print-btn" onclick="applyPreset('high')">High-risk example</button>
+      </div>
+
+      <!-- === AGE === -->
+      <div class="form-group" id="fg-age">
+        <label>Age</label>
+        <div class="home-hint beginner-only">Your current age in years.</div>
+        <div class="hint expert-only" data-feat="Age"></div>
+        <div class="slider-row">
+          <input type="range" id="age" min="18" max="85" value="30" oninput="onInput()">
+          <span class="value" id="age-val">30</span>
+          <span class="status-tag" id="age-status"></span>
+        </div>
+      </div>
+
+      <!-- === SEX === -->
+      <div class="form-group" id="fg-sex">
+        <label>Sex</label>
+        <div class="hint expert-only" data-feat="Sex"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="sex" value="0" checked onchange="onInput()"> Female</label>
+          <label><input type="radio" name="sex" value="1" onchange="onInput()"> Male</label>
+        </div>
+      </div>
+
+      <!-- === BMI === -->
+      <div class="form-group" id="fg-bmi">
+        <label>BMI (Body Mass Index)</label>
+        <div class="home-hint beginner-only">Weight (kg) / Height (m)^2. Don't know it? Use the calculator below.</div>
+        <div class="hint expert-only" data-feat="BMI"></div>
+        <div class="slider-row">
+          <input type="range" id="bmi" min="12" max="60" value="23" step="0.1" oninput="onInput()">
+          <span class="value" id="bmi-val">23.0</span>
+          <span class="status-tag" id="bmi-status"></span>
+        </div>
+        <div class="bmi-calc">
+          <select id="bmi-units" onchange="onUnitsChange()" title="Units">
+            <option value="metric">cm / kg</option>
+            <option value="imperial">in / lb</option>
+          </select>
+          <input type="number" id="bmi-height" placeholder="cm" min="50" max="250" step="any" title="Height">
+          <input type="number" id="bmi-weight" placeholder="kg" min="20" max="350" step="any" title="Weight">
+          <button type="button" onclick="calcBMI()">Use my BMI</button>
+          <span class="bmi-calc-msg" id="bmi-calc-msg"></span>
+        </div>
+      </div>
+
+      <!-- === HIGH BP === -->
+      <div class="form-group" id="fg-highbp">
+        <label>High blood pressure</label>
+        <div class="home-hint beginner-only">Has a doctor or nurse ever told you that you have high blood pressure?</div>
+        <div class="hint expert-only" data-feat="HighBP"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="highbp" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="highbp" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <!-- === HIGH CHOLESTEROL === -->
+      <div class="form-group" id="fg-highchol">
+        <label>High cholesterol</label>
+        <div class="home-hint beginner-only">Has a doctor or nurse ever told you that you have high cholesterol?</div>
+        <div class="hint expert-only" data-feat="HighChol"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="highchol" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="highchol" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <!-- === GENERAL HEALTH === -->
+      <div class="form-group" id="fg-genhlth">
+        <label>General health</label>
+        <div class="home-hint beginner-only">In general, would you say your health is...</div>
+        <div class="hint expert-only" data-feat="GenHlth"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="genhlth" value="1" onchange="onInput()"> Excellent</label>
+          <label><input type="radio" name="genhlth" value="2" checked onchange="onInput()"> Very good</label>
+          <label><input type="radio" name="genhlth" value="3" onchange="onInput()"> Good</label>
+          <label><input type="radio" name="genhlth" value="4" onchange="onInput()"> Fair</label>
+          <label><input type="radio" name="genhlth" value="5" onchange="onInput()"> Poor</label>
+        </div>
+      </div>
+
+      <!-- === PHYSICAL ACTIVITY === -->
+      <div class="form-group" id="fg-phys">
+        <label>Physical activity</label>
+        <div class="home-hint beginner-only">Any physical activity or exercise in the past 30 days, not counting your job?</div>
+        <div class="hint expert-only" data-feat="PhysActivity"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="phys" value="1" checked onchange="onInput()"> Yes</label>
+          <label><input type="radio" name="phys" value="0" onchange="onInput()"> No</label>
+        </div>
+      </div>
+
+      <!-- === SMOKER === -->
+      <div class="form-group" id="fg-smoker">
+        <label>Smoking history</label>
+        <div class="home-hint beginner-only">Have you smoked at least 100 cigarettes (5 packs) in your whole life?</div>
+        <div class="hint expert-only" data-feat="Smoker"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="smoker" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="smoker" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <!-- === FRUITS === -->
+      <div class="form-group" id="fg-fruits">
+        <label>Fruit</label>
+        <div class="home-hint beginner-only">Do you eat fruit 1 or more times per day?</div>
+        <div class="hint expert-only" data-feat="Fruits"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="fruits" value="1" checked onchange="onInput()"> Yes</label>
+          <label><input type="radio" name="fruits" value="0" onchange="onInput()"> No</label>
+        </div>
+      </div>
+
+      <!-- === VEGGIES === -->
+      <div class="form-group" id="fg-veggies">
+        <label>Vegetables</label>
+        <div class="home-hint beginner-only">Do you eat vegetables 1 or more times per day?</div>
+        <div class="hint expert-only" data-feat="Veggies"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="veggies" value="1" checked onchange="onInput()"> Yes</label>
+          <label><input type="radio" name="veggies" value="0" onchange="onInput()"> No</label>
+        </div>
+      </div>
+
+      <!-- === HEAVY ALCOHOL === -->
+      <div class="form-group" id="fg-alcohol">
+        <label>Heavy drinking</label>
+        <div class="home-hint beginner-only">Men: more than 14 drinks per week. Women: more than 7 drinks per week.</div>
+        <div class="hint expert-only" data-feat="HvyAlcoholConsump"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="alcohol" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="alcohol" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <!-- === STROKE === -->
+      <div class="form-group" id="fg-stroke">
+        <label>Stroke</label>
+        <div class="home-hint beginner-only">Has a doctor ever told you that you had a stroke?</div>
+        <div class="hint expert-only" data-feat="Stroke"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="stroke" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="stroke" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <!-- === HEART DISEASE === -->
+      <div class="form-group" id="fg-heart">
+        <label>Heart disease</label>
+        <div class="home-hint beginner-only">Have you ever had coronary heart disease or a heart attack?</div>
+        <div class="hint expert-only" data-feat="HeartDisease"></div>
+        <div class="radio-group">
+          <label><input type="radio" name="heart" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="heart" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="right-col">
+      <div class="card">
+        <h2>Model Performance</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="num">0.816</div>
+            <div class="label">Test AUC</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">75.1%</div>
+            <div class="label">Recall at 14.5% cutoff (5,309 of 7,069 test cases caught)</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">253,680</div>
+            <div class="label">US adults (CDC BRFSS 2015)</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">13</div>
+            <div class="label">Survey questions used (both modes)</div>
+          </div>
+        </div>
+        <div class="perf-list">
+          Test set (20% held out, never seen in training): precision 31.1% &middot; accuracy 73.3% &middot; 33.6% of people flagged &middot; 13.9% of the test set had diabetes or prediabetes.<br>
+          <strong>Cases caught, by group:</strong> women 74.6%, men 75.7% &middot; ages 18-44 <strong>43.1%</strong>, 45-64 72.7%, 65+ 81.0%.
+          It misses more than half of cases in adults under 45, so a low score at a young age is weak reassurance.
+        </div>
+        <div class="data-sources expert-only">
+          <h3>Data Source</h3>
+          <ul>
+            <li>CDC Behavioral Risk Factor Surveillance System (BRFSS) 2015, "Diabetes Health Indicators" (UCI ML Repository id 891)</li>
+            <li>253,680 US adults, men and women, ages 18 to 80+; telephone survey, self-reported</li>
+            <li>Label: ever told you have diabetes or prediabetes (13.9% yes)</li>
+            <li>Income, education and insurance left out on purpose (fairness)</li>
+            <li>StandardScaler + unweighted logistic regression (scikit-learn); cutoff chosen by 5-fold CV on training data</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h2>Screening Result</h2>
+        <div id="result" class="result-box low">
+          <div class="risk-header">
+            <div id="risk-gauge" class="risk-gauge"><div id="risk-circle" class="risk-circle low">--%</div></div>
+            <div>
+              <div id="risk-label" class="risk-label">Adjust values to begin</div>
+              <div id="risk-sublabel" class="risk-sublabel">Result updates automatically</div>
+            </div>
+          </div>
+
+          <div class="risk-bar-container">
+            <div class="risk-bar-bg">
+              <div id="risk-bar" class="risk-bar-fill" style="width:0%; background:#48bb78;"></div>
+            </div>
+            <div class="risk-bar-labels">
+              <span style="left:7%; transform:translateX(-50%)">7%</span>
+              <span style="left:14.5%">14.5%</span>
+              <span style="right:0">100%</span>
+            </div>
+          </div>
+
+          <div class="factors" id="factors"></div>
+
+          <div id="next-steps-box" style="margin-top:12px; padding:12px; background:#ebf8ff; border-radius:6px; font-size:0.82rem; color:#2a4365;">
+            <strong id="next-steps-title">What should you do next?</strong>
+            <div id="next-steps"></div>
+          </div>
+
+          <!-- Action Buttons: Print/Share -->
+          <div class="action-buttons">
+            <button class="print-btn" onclick="window.print()">&#128424; Print / Save PDF</button>
+          </div>
+
+          <div class="disclaimer">
+            <strong id="disclaimer-title">SCREENING AID ONLY</strong> -- <span id="disclaimer-detail"></span>
+          </div>
+
+          <div class="model-note" style="margin-top:8px; font-size:0.72rem; color:#a0aec0; line-height:1.5;">
+            Model: logistic regression trained on CDC BRFSS 2015 survey answers (253,680 US adults, self-reported). Test AUC 0.816; catches 75.1% of cases at the 14.5% cutoff (precision 31.1%, accuracy 73.3%). Estimates how common diabetes or prediabetes is among people with answers like yours -- not a diagnosis and not a 10-year forecast.<br>
+            Bands: Low &lt;7% &middot; Moderate 7-14.5% &middot; High (flagged for follow-up) 14.5%+.
+          </div>
+          <div class="lang-notice" id="lang-notice" style="display:block;">
+            Translations are built-in; the Colab version uses Claude + Google Translate for full explanations.
+          </div>
+        </div>
+      </div>
+
+      <!-- PERSONALIZED TIPS -->
+      <div class="tips-section" id="tips-section">
+        <h3>Personalized Tips</h3>
+        <div id="tips-content"></div>
+      </div>
+
+      <!-- RISK COMPARISON CHART -->
+      <div class="comparison-section" id="comparison-section">
+        <h3>How You Compare</h3>
+        <div style="font-size:0.75rem; color:#a0aec0; margin:-8px 0 12px;">Model score for the average answers of each group in the real BRFSS 2015 dataset (218,334 without, 35,346 with diabetes or prediabetes).</div>
+        <div class="comp-row">
+          <span class="comp-label">Avg. person without diabetes<br><span style="font-size:0.7rem; color:#a0aec0;">BMI 27.8, high BP 38%, general health avg 2.4, age band 7.8 (~55)</span></span>
+          <div class="comp-bar-bg">
+            <div class="comp-bar-fill" id="comp-bar-no" style="width:0%; background:#48bb78;"></div>
+          </div>
+          <span class="comp-val" id="comp-val-no">--</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label" style="font-weight:700;">Your score</span>
+          <div class="comp-bar-bg">
+            <div class="comp-bar-fill" id="comp-bar-you" style="width:0%; background:#2d6a9f;"></div>
+          </div>
+          <span class="comp-val" id="comp-val-you" style="font-weight:700;">--</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Avg. person with diabetes<br><span style="font-size:0.7rem; color:#a0aec0;">BMI 31.9, high BP 75%, general health avg 3.3, age band 9.4 (~62)</span></span>
+          <div class="comp-bar-bg">
+            <div class="comp-bar-fill" id="comp-bar-yes" style="width:0%; background:#fc8181;"></div>
+          </div>
+          <span class="comp-val" id="comp-val-yes">--</span>
+        </div>
+      </div>
+
+      <!-- RISK HISTORY TRACKER -->
+      <div class="history-section" id="history-section">
+        <h3>Track Over Time</h3>
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+          <button class="save-reading-btn" onclick="saveReading()">Save This Reading</button>
+          <span class="save-confirm" id="save-confirm">Saved!</span>
+        </div>
+        <div id="history-content">
+          <div class="history-empty">No readings saved yet. Click "Save This Reading" to start tracking.</div>
+        </div>
+        <button class="clear-history-btn" id="clear-history-btn" onclick="clearHistory()" style="display:none;">Clear all history</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO MEASURE AT HOME -->
+  <div class="how-to-measure" id="how-to-measure">
+    <h2>How to Answer the Questions</h2>
+
+    <div class="measure-card">
+      <h3>BMI (Body Mass Index)</h3>
+      <div class="equipment">You need: a scale and a tape measure (or know your height and weight). Or type them into the calculator under the BMI slider.</div>
+
+      <div class="step"><span class="step-num">1</span><span><strong>Weigh yourself</strong> in the morning before eating, wearing light clothing.</span></div>
+      <div class="step"><span class="step-num">2</span><span><strong>Measure your height</strong> standing straight against a wall (without shoes).</span></div>
+      <div class="step"><span class="step-num">3</span><span><strong>Calculate:</strong> BMI = Weight (kg) / [Height (m)]^2. Example: 80 kg / (1.75 m)^2 = 80 / 3.0625 = 26.1</span></div>
+      <div class="step"><span class="step-num">4</span><span><strong>Imperial formula:</strong> BMI = [Weight (lbs) / Height (in)^2] x 703. Example: 176 lbs / (69 in)^2 x 703 = 26.0</span></div>
+
+      <div class="tip">
+        <strong>BMI Categories:</strong><br>
+        Below 18.5 = Underweight<br>
+        18.5-24.9 = Normal weight<br>
+        25.0-29.9 = Overweight<br>
+        30.0+ = Obese -- higher diabetes risk
+      </div>
+    </div>
+
+    <div class="measure-card">
+      <h3>Blood Pressure and Cholesterol</h3>
+      <div class="equipment">The survey asked whether a doctor or nurse has <strong>ever told you</strong> that you have high blood pressure or high cholesterol. Answer from what you have been told, not from a single reading.</div>
+
+      <div class="step"><span class="step-num">1</span><span><strong>Not sure about blood pressure?</strong> A home arm-cuff monitor ($25-50 at a pharmacy) works. Sit quietly for 5 minutes, feet flat, cuff on bare upper arm.</span></div>
+      <div class="step"><span class="step-num">2</span><span><strong>Take 2-3 readings</strong>, 1 minute apart, on a few different days. If they are often 130/80 or higher, tell your doctor -- but for this screener, answer "Yes" only if a doctor or nurse has told you.</span></div>
+      <div class="step"><span class="step-num">3</span><span><strong>Cholesterol</strong> needs a blood test (lipid panel). If you have never had one, answer "No" and ask for one at your next checkup.</span></div>
+
+      <div class="tip">
+        <strong>Blood pressure (top/bottom):</strong><br>
+        Below 120/80 = Normal<br>
+        120-129 / below 80 = Elevated<br>
+        130/80 or higher = High -- see a doctor
+      </div>
+    </div>
+
+    <div class="measure-card">
+      <h3>Activity, Diet and Drinking</h3>
+      <div class="step"><span class="step-num">1</span><span><strong>Physical activity:</strong> "Yes" if you did any exercise or activity (walking, running, gardening, sports) in the past 30 days outside your job.</span></div>
+      <div class="step"><span class="step-num">2</span><span><strong>Fruit / vegetables:</strong> "Yes" if you usually eat them at least once a day.</span></div>
+      <div class="step"><span class="step-num">3</span><span><strong>Heavy drinking:</strong> one drink = a 12 oz beer, 5 oz glass of wine or 1.5 oz shot of spirits. Heavy means more than 14 drinks per week for men or more than 7 for women.</span></div>
+    </div>
+  </div>
+
+  <!-- AI EXPLANATION SECTION -->
+  <div class="ai-section">
+    <h2>AI-Powered Explanation</h2>
+    <div class="ai-placeholder">
+      <span class="ai-badge">Claude API Integration</span>
+      <div class="ai-note">AI-powered explanation powered by Claude API (available in the Colab notebook version)</div>
+      <div class="ai-example">
+        <strong>Example of what the AI explanation would look like:</strong><br><br>
+        "Based on your answers, the model estimates that about <strong>50 in 100 people who answered like you have diabetes or prediabetes</strong>. That is above the 14.5% follow-up cutoff. Here is what drives it:<br><br>
+        You rated your <strong>general health as Fair</strong>. Self-rated health has the largest coefficient in this model -- people who rate their health lower are much more likely to report diabetes.<br><br>
+        Your <strong>BMI of 35</strong> is in the obese range (30+), which is linked to insulin resistance. BMI and <strong>age (60-64)</strong> are the next strongest factors, followed by <strong>high blood pressure</strong> and <strong>high cholesterol</strong>.<br><br>
+        <strong>Recommended next steps:</strong> Ask your doctor for an HbA1c or fasting plasma glucose test. Consider 150 minutes of moderate exercise per week and a balanced diet emphasizing whole grains, vegetables, and lean proteins."
+      </div>
+    </div>
+  </div>
+
+  <!-- Info section -->
+  <div class="info-section">
+    <h2>About This Screener</h2>
+    <div class="info-grid">
+      <div class="info-card">
+        <h3>How It Works</h3>
+        <p>A logistic regression model trained with scikit-learn on the CDC BRFSS 2015 survey. Each answer is standardized (value minus dataset mean, divided by standard deviation), multiplied by its learned coefficient, summed with an intercept, and passed through a sigmoid to give a probability. The largest coefficients are general health (0.58), age (0.42), BMI (0.42), high blood pressure (0.39) and high cholesterol (0.29). The model was trained without class weighting, so the number is a real probability.</p>
+      </div>
+      <div class="info-card">
+        <h3>What It Predicts</h3>
+        <p>The survey asked people whether they <strong>have</strong> (or have been told they have) diabetes or prediabetes. So the score estimates how common diabetes or prediabetes is among people with answers like yours. It is a screening aid -- not a diagnosis, and not a forecast of whether you will get diabetes in the next 10 years. Only a blood test (HbA1c, fasting glucose) can tell.</p>
+      </div>
+      <div class="info-card">
+        <h3>Accuracy (Test Set)</h3>
+        <p>Measured on 20% of the data held out and never seen in training: AUC 0.816. At the 14.5% cutoff it catches 75.1% of cases (5,309 of 7,069); 31.1% of flagged people actually had diabetes or prediabetes (precision); accuracy 73.3%; 33.6% of people are flagged. The cutoff was chosen by 5-fold cross-validation on training data only, as the highest cutoff that still caught at least 75% of cases.</p>
+      </div>
+      <div class="info-card">
+        <h3>Diverse, But Not Global</h3>
+        <p>253,680 US adults, men and women, of all ethnic groups the CDC survey reaches, ages 18 to 80+. It is US-only, and the cleaned dataset has no race/ethnicity column, so we could <strong>not</strong> check accuracy by ethnicity. We did check by sex (cases caught: women 74.6%, men 75.7%) and age (18-44: <strong>43.1%</strong>, 45-64: 72.7%, 65+: 81.0%). It misses many cases in adults under 45.</p>
+      </div>
+      <div class="info-card">
+        <h3>Data Limitations</h3>
+        <p>Answers are self-reported over the phone, from 2015. People may not know they have high blood pressure, cholesterol or diabetes, and some answers in the data look counter-intuitive (for example, heavy drinkers reported slightly less diabetes) -- that is a pattern in survey data, not a health benefit. Income, education and insurance were left out on purpose: a health screener should not score people on how much money they have.</p>
+      </div>
+      <div class="info-card">
+        <h3>Home vs Expert Mode</h3>
+        <p>Both modes ask the same 13 questions and use the same model, so the score is identical. Home mode shows friendly wording; Expert mode shows the encoded value the model receives (for example HighBP = 1, Age band 9), each coefficient, and each answer's contribution (coefficient x standardized value) to the log-odds. The previous version of this page (Pima dataset) is kept in HealthScreener_Backups.</p>
+      </div>
+      <div class="info-card">
+        <h3>What To Do With Results</h3>
+        <p>A high-risk result means you should see a doctor for proper testing (HbA1c, fasting plasma glucose). A low-risk result does NOT rule out diabetes or prediabetes -- many people have no symptoms, and this model misses many younger cases. The American Diabetes Association recommends testing for all adults from age 35, or earlier if you are overweight and have other risk factors.</p>
+      </div>
+      <div class="info-card">
+        <h3>Prevention</h3>
+        <p>Type 2 diabetes can often be prevented or delayed through lifestyle changes: maintaining a healthy weight (BMI under 25), exercising 150+ minutes per week, eating a balanced diet rich in fiber and low in processed sugar, not smoking, and getting regular checkups. Even modest weight loss (5-7% of body weight) significantly reduces risk.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Diabetes Risk Screener &mdash; Hackathon Practice Project &mdash; Not for clinical use<br>
+  Data: CDC Behavioral Risk Factor Surveillance System (BRFSS) 2015, Diabetes Health Indicators (UCI ML Repository)
+</footer>
+
+<div class="print-timestamp" id="print-timestamp"></div>
+
+<script>
+// ===== TRAINED LOGISTIC REGRESSION MODEL =====
+// CDC BRFSS 2015 Diabetes Health Indicators (253,680 US adults).
+// sklearn StandardScaler + unweighted LogisticRegression; label = diabetes or prediabetes.
+// Test AUC 0.816; at the 14.5% cutoff it catches 75.1% of cases (accuracy 73.3%).
+// Coefficients copied exactly from brfss_data/brfss_models.json (key "diabetes").
+const FEATURES = ['HighBP', 'HighChol', 'BMI', 'Smoker', 'PhysActivity', 'Fruits', 'Veggies',
+                  'HvyAlcoholConsump', 'GenHlth', 'Sex', 'Age', 'Stroke', 'HeartDisease'];
+const MODEL = {
+  mean:  { HighBP: 0.429, HighChol: 0.4243, BMI: 28.378, Smoker: 0.4429, PhysActivity: 0.757, Fruits: 0.6344, Veggies: 0.8114,
+           HvyAlcoholConsump: 0.0557, GenHlth: 2.5118, Sex: 0.441, Age: 8.0328, Stroke: 0.0404, HeartDisease: 0.0942 },
+  scale: { HighBP: 0.4949, HighChol: 0.4942, BMI: 6.5983, Smoker: 0.4967, PhysActivity: 0.4289, Fruits: 0.4816, Veggies: 0.3912,
+           HvyAlcoholConsump: 0.2294, GenHlth: 1.0684, Sex: 0.4965, Age: 3.0514, Stroke: 0.1969, HeartDisease: 0.2922 },
+  coef:  { HighBP: 0.3888, HighChol: 0.2871, BMI: 0.4167, Smoker: 0.0017, PhysActivity: -0.0263, Fruits: -0.0375, Veggies: -0.0202,
+           HvyAlcoholConsump: -0.1909, GenHlth: 0.5839, Sex: 0.1005, Age: 0.417, Stroke: 0.0331, HeartDisease: 0.0697 },
+  intercept: -2.3967
+};
+
+// Risk bands (percent): Low < 7, Moderate 7-14.5, High (flagged) >= 14.5
+const BAND_MODERATE = 7;
+const BAND_HIGH = 14.5;
+
+// Radio-button name for each yes/no or coded feature
+const RADIO = { HighBP: 'highbp', HighChol: 'highchol', Smoker: 'smoker', PhysActivity: 'phys', Fruits: 'fruits', Veggies: 'veggies',
+                HvyAlcoholConsump: 'alcohol', GenHlth: 'genhlth', Sex: 'sex', Stroke: 'stroke', HeartDisease: 'heart' };
+
+const FEATURE_LABELS = {
+  HighBP: 'High blood pressure',
+  HighChol: 'High cholesterol',
+  BMI: 'BMI',
+  Smoker: 'Smoked 100+ cigarettes',
+  PhysActivity: 'Active in past 30 days',
+  Fruits: 'Fruit daily',
+  Veggies: 'Vegetables daily',
+  HvyAlcoholConsump: 'Heavy drinking',
+  GenHlth: 'General health',
+  Sex: 'Sex',
+  Age: 'Age',
+  Stroke: 'Past stroke',
+  HeartDisease: 'Heart disease / heart attack'
+};
+
+const FEATURE_CODING = {
+  BMI: 'number (12-60)',
+  GenHlth: '1 Excellent ... 5 Poor',
+  Sex: '0 = female, 1 = male',
+  Age: '13 bands: 1 = 18-24 ... 13 = 80+'
+};
+
+const GENHLTH_NAMES = ['', 'Excellent', 'Very good', 'Good', 'Fair', 'Poor'];
+const AGE_BANDS = ['', '18-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', '80+'];
+
+// Years -> BRFSS 13-level age band
+function ageToBand(years) {
+  if (years < 25) return 1;
+  return Math.min(13, Math.floor((years - 25) / 5) + 2);
+}
+
+// Real BRFSS 2015 class means (pandas groupby Diabetes_binary) for the comparison chart
+const DATASET_AVG = {
+  noDiabetes: { HighBP: 0.3766, HighChol: 0.3843, BMI: 27.8058, Smoker: 0.431, PhysActivity: 0.7769, Fruits: 0.6422, Veggies: 0.8203,
+                HvyAlcoholConsump: 0.0615, GenHlth: 2.3852, Sex: 0.4341, Age: 7.8141, Stroke: 0.0322, HeartDisease: 0.0734 },
+  diabetes:   { HighBP: 0.7527, HighChol: 0.6701, BMI: 31.944, Smoker: 0.5182, PhysActivity: 0.6305, Fruits: 0.5854, Veggies: 0.7564,
+                HvyAlcoholConsump: 0.0235, GenHlth: 3.291, Sex: 0.4791, Age: 9.3791, Stroke: 0.0925, HeartDisease: 0.2229 }
+};
+
+// One-click demo presets (risk verified in Python with the model above)
+// Healthy ~1% (Low), Borderline ~11% (Moderate), High-risk ~50% (High)
+const PRESETS = {
+  healthy:    { age: 28, Sex: 0, BMI: 22, HighBP: 0, HighChol: 0, GenHlth: 2, PhysActivity: 1, Smoker: 0, Fruits: 1, Veggies: 1, HvyAlcoholConsump: 0, Stroke: 0, HeartDisease: 0 },
+  borderline: { age: 48, Sex: 1, BMI: 28, HighBP: 1, HighChol: 0, GenHlth: 3, PhysActivity: 1, Smoker: 0, Fruits: 0, Veggies: 1, HvyAlcoholConsump: 0, Stroke: 0, HeartDisease: 0 },
+  high:       { age: 62, Sex: 1, BMI: 35, HighBP: 1, HighChol: 1, GenHlth: 4, PhysActivity: 0, Smoker: 1, Fruits: 0, Veggies: 0, HvyAlcoholConsump: 0, Stroke: 0, HeartDisease: 0 }
+};
+
+let currentMode = 'beginner';
+let currentLang = 'en';
+let lastResult = null;
+
+function predictRisk(values) {
+  let logit = MODEL.intercept;
+  const contributions = {};
+  FEATURES.forEach(f => {
+    const z = (values[f] - MODEL.mean[f]) / MODEL.scale[f];
+    contributions[f] = MODEL.coef[f] * z;
+    logit += contributions[f];
+  });
+  return { prob: 1 / (1 + Math.exp(-logit)), contributions: contributions };
+}
+
+function getRiskLevel(risk) {
+  if (risk >= BAND_HIGH) return 'high';
+  if (risk >= BAND_MODERATE) return 'moderate';
+  return 'low';
+}
+
+function getRadio(name) {
+  const el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? parseInt(el.value, 10) : 0;
+}
+
+function setRadio(name, value) {
+  const el = document.querySelector('input[name="' + name + '"][value="' + value + '"]');
+  if (el) el.checked = true;
+}
+
+function calculateRisk() {
+  const ageYears = parseInt(document.getElementById('age').value, 10);
+  const values = {
+    BMI: parseFloat(document.getElementById('bmi').value),
+    Age: ageToBand(ageYears)
+  };
+  Object.keys(RADIO).forEach(f => { values[f] = getRadio(RADIO[f]); });
+
+  const pred = predictRisk(values);
+  const pct = pred.prob * 100;
+
+  return {
+    risk: Math.round(pct),
+    riskExact: pct,
+    contributions: pred.contributions,
+    values: values,
+    ageYears: ageYears
+  };
+}
+
+// ===== BUILT-IN TRANSLATIONS (result card) =====
+const I18N = {
+  en: {
+    level: { low: 'LOW RISK', moderate: 'MODERATE RISK', high: 'HIGH RISK -- FLAGGED FOR FOLLOW-UP' },
+    summaryHome: 'About {r} in 100 people with answers like yours have diabetes or prediabetes',
+    summaryExpert: 'Model probability: {r}% (13 survey features, cutoff 14.5%)',
+    nextTitle: 'What should you do next?',
+    next: {
+      low: 'Your answers look like those of people who mostly do not have diabetes. Keep up healthy habits: balanced diet, regular exercise, healthy weight (BMI). Still get regular screenings -- the American Diabetes Association recommends testing from age 35, or earlier if you have risk factors. A low score does not rule out diabetes: this model misses many cases in adults under 45.',
+      moderate: 'Your result is in the moderate range (7-14.5%). <strong>Mention it at your next checkup</strong> and ask about an HbA1c or fasting glucose test. Focus on: maintaining a healthy weight, exercising at least 150 minutes per week, reducing refined carbohydrates and sugary drinks, and eating more fiber-rich foods (vegetables, whole grains, legumes). Even modest weight loss (5-7%) significantly reduces risk.',
+      high: 'Your result is at or above the 14.5% cutoff, so it is flagged for follow-up. <strong>Schedule an appointment with your doctor</strong> and ask for an HbA1c test and a fasting plasma glucose test. If you have symptoms (frequent urination, extreme thirst, unexplained weight loss, blurred vision), seek medical attention promptly. In the meantime, reduce sugar intake and increase physical activity.'
+    },
+    disclaimerTitle: 'SCREENING AID ONLY',
+    disclaimer: 'Logistic regression trained on CDC BRFSS 2015 survey answers from 253,680 US adults. It estimates how common diabetes or prediabetes is among people with answers like yours -- not a diagnosis and not a 10-year forecast.'
+  },
+  hi: {
+    level: { low: 'कम जोखिम', moderate: 'मध्यम जोखिम', high: 'उच्च जोखिम -- आगे जाँच ज़रूरी' },
+    summaryHome: 'आपके जैसे उत्तर देने वाले लगभग 100 में से {r} लोगों को डायबिटीज़ या प्रीडायबिटीज़ है',
+    summaryExpert: 'मॉडल संभावना: {r}% (13 सर्वे प्रश्न, सीमा 14.5%)',
+    nextTitle: 'आगे क्या करें?',
+    next: {
+      low: 'आपके उत्तर उन लोगों जैसे हैं जिनमें ज़्यादातर को डायबिटीज़ नहीं है। स्वस्थ आदतें जारी रखें: संतुलित आहार, नियमित व्यायाम और स्वस्थ वज़न (BMI)। फिर भी 35 वर्ष की आयु से, या जोखिम कारक होने पर उससे पहले, नियमित जाँच कराएँ। कम स्कोर डायबिटीज़ को पूरी तरह नकारता नहीं -- यह मॉडल 45 वर्ष से कम आयु के कई मामलों को चूक जाता है।',
+      moderate: 'आपका परिणाम मध्यम श्रेणी (7-14.5%) में है। <strong>अगली जाँच में डॉक्टर को यह बताएँ</strong> और HbA1c या फास्टिंग ग्लूकोज़ टेस्ट के बारे में पूछें। स्वस्थ वज़न बनाए रखें, हर सप्ताह कम से कम 150 मिनट व्यायाम करें, मीठे पेय और मैदा कम करें, और फाइबर वाला भोजन (सब्ज़ियाँ, साबुत अनाज, दालें) बढ़ाएँ। थोड़ा सा वज़न घटाना (5-7%) भी जोखिम काफ़ी कम करता है।',
+      high: 'आपका परिणाम 14.5% की सीमा पर या उससे ऊपर है, इसलिए इसे आगे की जाँच के लिए चिह्नित किया गया है। <strong>डॉक्टर से अपॉइंटमेंट लें</strong> और HbA1c तथा फास्टिंग प्लाज़्मा ग्लूकोज़ टेस्ट कराएँ। अगर लक्षण हैं (बार-बार पेशाब, बहुत प्यास, बिना कारण वज़न घटना, धुंधला दिखना), तो जल्दी चिकित्सा सहायता लें।'
+    },
+    disclaimerTitle: 'केवल स्क्रीनिंग सहायता',
+    disclaimer: 'CDC BRFSS 2015 सर्वे के 2,53,680 अमेरिकी वयस्कों के उत्तरों पर प्रशिक्षित लॉजिस्टिक रिग्रेशन मॉडल। यह बताता है कि आपके जैसे उत्तर वाले लोगों में डायबिटीज़ या प्रीडायबिटीज़ कितनी आम है -- यह निदान नहीं है और 10 साल का पूर्वानुमान भी नहीं।'
+  },
+  gu: {
+    level: { low: 'ઓછું જોખમ', moderate: 'મધ્યમ જોખમ', high: 'ઊંચું જોખમ -- વધુ તપાસ જરૂરી' },
+    summaryHome: 'તમારા જેવા જવાબ આપનાર આશરે 100 માંથી {r} લોકોને ડાયાબિટીસ અથવા પ્રીડાયાબિટીસ છે',
+    summaryExpert: 'મોડેલ સંભાવના: {r}% (13 સર્વે પ્રશ્નો, મર્યાદા 14.5%)',
+    nextTitle: 'હવે શું કરવું?',
+    next: {
+      low: 'તમારા જવાબો એવા લોકો જેવા છે જેમાંના મોટા ભાગનાને ડાયાબિટીસ નથી. સ્વસ્થ ટેવો ચાલુ રાખો: સંતુલિત આહાર, નિયમિત કસરત અને સ્વસ્થ વજન (BMI). છતાં 35 વર્ષની ઉંમરથી, અથવા જોખમ પરિબળો હોય તો વહેલા, નિયમિત તપાસ કરાવો. ઓછો સ્કોર ડાયાબિટીસને સંપૂર્ણ નકારતો નથી -- આ મોડેલ 45 વર્ષથી નાની ઉંમરના ઘણા કેસ ચૂકી જાય છે.',
+      moderate: 'તમારું પરિણામ મધ્યમ શ્રેણી (7-14.5%) માં છે. <strong>આગલી તપાસ વખતે ડૉક્ટરને જણાવો</strong> અને HbA1c અથવા ફાસ્ટિંગ ગ્લુકોઝ ટેસ્ટ વિશે પૂછો. સ્વસ્થ વજન જાળવો, દર અઠવાડિયે ઓછામાં ઓછી 150 મિનિટ કસરત કરો, ખાંડવાળાં પીણાં અને મેંદો ઓછો કરો, અને રેસાવાળો ખોરાક (શાકભાજી, આખા અનાજ, કઠોળ) વધારો. થોડું વજન ઘટાડવું (5-7%) પણ જોખમ ઘણું ઘટાડે છે.',
+      high: 'તમારું પરિણામ 14.5% ની મર્યાદા પર અથવા તેનાથી ઉપર છે, તેથી વધુ તપાસ માટે ચિહ્નિત કરાયું છે. <strong>ડૉક્ટરની એપોઇન્ટમેન્ટ લો</strong> અને HbA1c તથા ફાસ્ટિંગ પ્લાઝ્મા ગ્લુકોઝ ટેસ્ટ કરાવો. જો લક્ષણો હોય (વારંવાર પેશાબ, ખૂબ તરસ, કારણ વગર વજન ઘટવું, ઝાંખું દેખાવું), તો જલ્દી તબીબી મદદ લો.'
+    },
+    disclaimerTitle: 'માત્ર સ્ક્રીનિંગ સહાય',
+    disclaimer: 'CDC BRFSS 2015 સર્વેના 2,53,680 અમેરિકન પુખ્ત વયના લોકોના જવાબો પર તાલીમ પામેલું લોજિસ્ટિક રિગ્રેશન મોડેલ. તે બતાવે છે કે તમારા જેવા જવાબ ધરાવતા લોકોમાં ડાયાબિટીસ અથવા પ્રીડાયાબિટીસ કેટલું સામાન્ય છે -- આ નિદાન નથી અને 10 વર્ષની આગાહી પણ નથી.'
+  },
+  es: {
+    level: { low: 'RIESGO BAJO', moderate: 'RIESGO MODERADO', high: 'RIESGO ALTO -- REQUIERE SEGUIMIENTO' },
+    summaryHome: 'Unas {r} de cada 100 personas con respuestas como las suyas tienen diabetes o prediabetes',
+    summaryExpert: 'Probabilidad del modelo: {r}% (13 variables de la encuesta, umbral 14.5%)',
+    nextTitle: '¿Qué debe hacer ahora?',
+    next: {
+      low: 'Sus respuestas se parecen a las de personas que en su mayoría no tienen diabetes. Mantenga hábitos saludables: dieta equilibrada, ejercicio regular y peso saludable (BMI). Aun así, hágase controles periódicos: la American Diabetes Association recomienda la prueba a partir de los 35 años, o antes si tiene factores de riesgo. Un resultado bajo no descarta la diabetes: este modelo pasa por alto muchos casos en adultos menores de 45 años.',
+      moderate: 'Su resultado está en el rango moderado (7-14.5%). <strong>Coméntelo en su próximo control</strong> y pregunte por una prueba de HbA1c o de glucosa en ayunas. Mantenga un peso saludable, haga al menos 150 minutos de ejercicio por semana, reduzca las bebidas azucaradas y las harinas refinadas, y coma más fibra (verduras, granos integrales, legumbres). Incluso una pérdida de peso modesta (5-7%) reduce mucho el riesgo.',
+      high: 'Su resultado está en o por encima del umbral del 14.5%, por lo que se marca para seguimiento. <strong>Pida una cita con su médico</strong> y solicite una prueba de HbA1c y de glucosa plasmática en ayunas. Si tiene síntomas (orinar con frecuencia, sed extrema, pérdida de peso sin causa, visión borrosa), busque atención médica pronto.'
+    },
+    disclaimerTitle: 'SOLO AYUDA DE DETECCIÓN',
+    disclaimer: 'Regresión logística entrenada con respuestas de la encuesta CDC BRFSS 2015 de 253,680 adultos de EE. UU. Estima qué tan común es la diabetes o prediabetes entre personas con respuestas como las suyas: no es un diagnóstico ni un pronóstico a 10 años.'
+  }
+};
+
+function tr() {
+  return I18N[currentLang] || I18N.en;
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  // Preserve dark class when switching modes
+  const isDark = document.body.classList.contains('dark');
+  document.body.className = (mode === 'beginner' ? 'beginner' : '') + (isDark ? ' dark' : '');
+  document.getElementById('btn-beginner').className = 'mode-btn' + (mode === 'beginner' ? ' active' : '');
+  document.getElementById('btn-expert').className = 'mode-btn' + (mode === 'expert' ? ' active' : '');
+  document.getElementById('form-title').textContent = mode === 'beginner' ? 'Your Health Information' : 'Model Inputs (BRFSS encoding)';
+  onInput();
+}
+
+function onLangChange() {
+  currentLang = document.getElementById('lang-select').value;
+  onInput();
+}
+
+// Expert-mode hints: feature name, encoding and coefficient (filled from MODEL so they always match)
+function fillExpertHints() {
+  document.querySelectorAll('.hint[data-feat]').forEach(el => {
+    const f = el.getAttribute('data-feat');
+    const coding = FEATURE_CODING[f] || '0 = no, 1 = yes';
+    const c = MODEL.coef[f];
+    el.textContent = f + ': ' + coding + ' | coef ' + (c >= 0 ? '+' : '') + c.toFixed(4) +
+      ' | mean ' + MODEL.mean[f] + ', sd ' + MODEL.scale[f];
+  });
+}
+
+// ===== BMI CALCULATOR =====
+function onUnitsChange() {
+  const imperial = document.getElementById('bmi-units').value === 'imperial';
+  document.getElementById('bmi-height').placeholder = imperial ? 'in' : 'cm';
+  document.getElementById('bmi-weight').placeholder = imperial ? 'lb' : 'kg';
+}
+
+function calcBMI() {
+  const imperial = document.getElementById('bmi-units').value === 'imperial';
+  const h = parseFloat(document.getElementById('bmi-height').value);
+  const w = parseFloat(document.getElementById('bmi-weight').value);
+  const msg = document.getElementById('bmi-calc-msg');
+  if (!(h > 0) || !(w > 0)) { msg.textContent = 'Enter both height and weight.'; return; }
+  const bmi = imperial ? w / (h * h) * 703 : w / Math.pow(h / 100, 2);
+  if (!isFinite(bmi)) { msg.textContent = 'Check the numbers.'; return; }
+  const clamped = Math.min(60, Math.max(12, bmi));
+  document.getElementById('bmi').value = clamped.toFixed(1);
+  msg.textContent = 'Your BMI is ' + bmi.toFixed(1) + (clamped !== bmi ? ' (outside supported range; model uses BMI ' + clamped.toFixed(1) + ')'  : '') + '.';
+  onInput();
+}
+
+// ===== DEMO PRESETS =====
+function applyPreset(name) {
+  const p = PRESETS[name];
+  if (!p) return;
+  document.getElementById('age').value = p.age;
+  document.getElementById('bmi').value = p.BMI;
+  Object.keys(RADIO).forEach(f => setRadio(RADIO[f], p[f]));
+  onInput();
+}
+
+function getStatus(id, val) {
+  switch(id) {
+    case 'age':
+      return ['Band ' + ageToBand(val) + ': ' + AGE_BANDS[ageToBand(val)], val < 45 ? 'normal' : 'warning'];
+    case 'bmi':
+      if (val < 18.5) return ['Underweight', 'warning'];
+      if (val < 25) return ['Normal', 'normal'];
+      if (val < 30) return ['Overweight', 'warning'];
+      return ['Obese', 'danger'];
+    default:
+      return ['--', 'normal'];
+  }
+}
+
+function describeValue(f, v) {
+  switch(f) {
+    case 'BMI': return v.toFixed(1);
+    case 'GenHlth': return GENHLTH_NAMES[v];
+    case 'Sex': return v === 1 ? 'Male' : 'Female';
+    case 'Age': return AGE_BANDS[v];
+    default: return v === 1 ? 'Yes' : 'No';
+  }
+}
+
+// Each feature's contribution to the model's log-odds (coef * z), largest effect first
+function buildFactors(result) {
+  const factors = [];
+  const v = result.values;
+  const c = result.contributions;
+
+  const sorted = FEATURES.slice().sort((a, b) => Math.abs(c[b]) - Math.abs(c[a]));
+  sorted.forEach(f => {
+    const contrib = c[f];
+    let name;
+    if (currentMode === 'expert') {
+      const z = (v[f] - MODEL.mean[f]) / MODEL.scale[f];
+      name = f + ' = ' + (f === 'BMI' ? v[f].toFixed(1) : v[f]) + ' <span style="color:#a0aec0; font-size:0.75rem;">(z ' + z.toFixed(2) + ' x coef ' + MODEL.coef[f] + ')</span>';
+    } else {
+      name = FEATURE_LABELS[f] + ': ' + describeValue(f, v[f]);
+    }
+    if (f === 'HvyAlcoholConsump' && v[f] === 1) name += ' <span style="color:#a0aec0; font-size:0.72rem;">(survey quirk, not a health benefit)</span>';
+    name += ' <span style="color:#a0aec0; font-size:0.75rem;">' + (contrib >= 0 ? '+' : '') + contrib.toFixed(2) + '</span>';
+
+    let cls, tag;
+    if (contrib >= 0.3) { cls = 'risk'; tag = 'Raises'; }
+    else if (contrib >= 0.05) { cls = 'warn'; tag = 'Slightly raises'; }
+    else if (contrib > -0.05) { cls = 'ok'; tag = 'Neutral'; }
+    else { cls = 'ok'; tag = 'Lowers'; }
+    factors.push({name: name, cls: cls, tag: tag});
+  });
+
+  return factors;
+}
+
+// ===== PERSONALIZED TIPS =====
+function buildTips(result) {
+  const v = result.values;
+  const tips = [];
+
+  if (v.GenHlth >= 4) {
+    tips.push({
+      title: 'General Health Rated ' + GENHLTH_NAMES[v.GenHlth],
+      text: 'Self-rated health is the strongest factor in this model. If you feel your health is fair or poor, a checkup with blood tests (HbA1c, fasting glucose, cholesterol) is a good idea -- unexplained tiredness, thirst or frequent urination can be signs of high blood sugar.'
+    });
+  }
+
+  if (v.BMI >= 30) {
+    tips.push({
+      title: 'High BMI (' + v.BMI.toFixed(1) + ')',
+      text: 'A 5-7% weight loss can reduce diabetes risk by up to 58%. Start with small, sustainable changes: reduce portion sizes, swap sugary drinks for water, and aim for 30 minutes of activity most days. Even losing 10-15 pounds makes a significant difference.'
+    });
+  } else if (v.BMI >= 25) {
+    tips.push({
+      title: 'Overweight BMI (' + v.BMI.toFixed(1) + ')',
+      text: 'Maintaining a healthy weight is one of the best ways to prevent diabetes. Focus on balanced meals with plenty of vegetables, lean protein, and whole grains. Avoid crash diets -- aim for gradual, sustainable weight loss of 1-2 pounds per week.'
+    });
+  }
+
+  if (v.HighBP === 1) {
+    tips.push({
+      title: 'High Blood Pressure',
+      text: 'High blood pressure and diabetes often go together. Take any prescribed medicine, check your pressure at home, reduce sodium to under 2,300 mg/day (about 1 teaspoon of salt), try the DASH diet, and limit alcohol. Ask your doctor to check your blood sugar at your next visit.'
+    });
+  }
+
+  if (v.HighChol === 1) {
+    tips.push({
+      title: 'High Cholesterol',
+      text: 'Swap saturated fats (fried food, fatty meat, butter) for unsaturated ones (olive oil, nuts, fish), eat more soluble fiber (oats, beans, lentils), and keep up regular activity. If you take cholesterol medicine, keep taking it as prescribed.'
+    });
+  }
+
+  if (v.PhysActivity === 0) {
+    tips.push({
+      title: 'No Physical Activity in the Past Month',
+      text: '150 minutes of moderate exercise per week (like brisk walking) reduces diabetes risk by 30-50%. Start small: a 10-minute walk after dinner. Gradually increase to 30 minutes, 5 days a week. Any movement counts -- gardening, dancing, taking stairs.'
+    });
+  }
+
+  if (v.Fruits === 0 || v.Veggies === 0) {
+    tips.push({
+      title: 'Eat More ' + (v.Fruits === 0 && v.Veggies === 0 ? 'Fruit and Vegetables' : (v.Fruits === 0 ? 'Fruit' : 'Vegetables')),
+      text: 'Aim for vegetables at most meals and whole fruit (not juice) once or twice a day. Fill half your plate with non-starchy vegetables -- they add fiber, which slows sugar absorption and helps you feel full.'
+    });
+  }
+
+  if (v.Smoker === 1) {
+    tips.push({
+      title: 'Smoking History',
+      text: 'Smoking raises the risk of type 2 diabetes and its complications (heart disease, kidney and nerve damage). If you still smoke, quitting at any age helps -- ask your doctor about support, or call a quitline (1-800-QUIT-NOW in the US).'
+    });
+  }
+
+  if (v.HvyAlcoholConsump === 1) {
+    tips.push({
+      title: 'Heavy Drinking',
+      text: 'In this survey heavy drinkers reported slightly less diabetes, which slightly lowers the score -- but heavy drinking raises blood pressure, adds empty calories and damages the liver and pancreas. Cutting back is good for your health.'
+    });
+  }
+
+  if (v.Stroke === 1 || v.HeartDisease === 1) {
+    tips.push({
+      title: 'Past ' + (v.Stroke === 1 && v.HeartDisease === 1 ? 'Stroke and Heart Disease' : (v.Stroke === 1 ? 'Stroke' : 'Heart Disease')),
+      text: 'People with heart disease or a past stroke should have their blood sugar checked regularly -- diabetes raises the chance of another event. Ask your care team whether you are due for an HbA1c test.'
+    });
+  }
+
+  if (result.ageYears >= 35 && tips.length === 0) {
+    tips.push({
+      title: 'Routine Screening (age ' + result.ageYears + ')',
+      text: 'The American Diabetes Association recommends diabetes testing for all adults from age 35, repeated at least every 3 years if normal. Ask for an HbA1c or fasting glucose test at your next checkup.'
+    });
+  }
+
+  // If no specific tips, give general encouragement
+  if (tips.length === 0) {
+    tips.push({
+      title: 'Keep Up the Good Work',
+      text: 'Your answers look encouraging. Continue maintaining a balanced diet, regular physical activity, and healthy weight. Get regular check-ups, especially after age 35. Stay hydrated, manage stress, and get 7-9 hours of sleep per night.'
+    });
+  }
+
+  return tips;
+}
+
+function renderTips(result) {
+  const tips = buildTips(result);
+  const container = document.getElementById('tips-content');
+  let html = '';
+  tips.forEach(function(tip) {
+    html += '<div class="tip-item"><strong>' + tip.title + '</strong><p>' + tip.text + '</p></div>';
+  });
+  container.innerHTML = html;
+}
+
+// ===== RISK COMPARISON CHART =====
+function renderComparison(risk) {
+  // Model score for the average answers in each class of the real BRFSS dataset
+  var noRisk = Math.round(predictRisk(DATASET_AVG.noDiabetes).prob * 100);
+  var yesRisk = Math.round(predictRisk(DATASET_AVG.diabetes).prob * 100);
+
+  document.getElementById('comp-bar-no').style.width = noRisk + '%';
+  document.getElementById('comp-val-no').textContent = noRisk + '%';
+
+  document.getElementById('comp-bar-you').style.width = risk + '%';
+  document.getElementById('comp-val-you').textContent = risk + '%';
+
+  // Color the user bar based on risk level
+  var yourBar = document.getElementById('comp-bar-you');
+  var lvl = getRiskLevel(risk);
+  yourBar.style.background = lvl === 'high' ? '#fc8181' : lvl === 'moderate' ? '#ecc94b' : '#48bb78';
+
+  document.getElementById('comp-bar-yes').style.width = yesRisk + '%';
+  document.getElementById('comp-val-yes').textContent = yesRisk + '%';
+}
+
+// ===== RISK HISTORY TRACKER =====
+function getHistory() {
+  try {
+    var data = localStorage.getItem('diabetesRiskHistory');
+    const parsed = data ? JSON.parse(data) : [];
+    return Array.isArray(parsed) ? parsed.filter(r => r && typeof r === 'object' && !Array.isArray(r) && Number.isFinite(Date.parse(r.date)) && (r.model === 'brfss' ? (Number.isFinite(r.risk) || [r.d, r.h, r.s].every(v => typeof v === 'string' && /^(?:<0\.1|\d+(?:\.\d+)?)$/.test(v))) : Number.isFinite(r.risk)) && (r.bmi === null || Number.isFinite(r.bmi)) && ['age','glucose','bp','highBP','highChol','genHlth','active'].every(k => r[k] === undefined || Number.isFinite(r[k]))) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveHistory(history) {
+  try {
+    localStorage.setItem('diabetesRiskHistory', JSON.stringify(history));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function saveReading() {
+  if (!lastResult) return;
+  var history = getHistory();
+  var v = lastResult.values;
+  var reading = {
+    date: new Date().toISOString(),
+    model: 'brfss',
+    risk: lastResult.risk,
+    bmi: parseFloat(v.BMI.toFixed(1)),
+    age: lastResult.ageYears,
+    highBP: v.HighBP,
+    highChol: v.HighChol,
+    genHlth: v.GenHlth,
+    active: v.PhysActivity
+  };
+  history.push(reading);
+  // Keep only last 20 readings (show last 5)
+  if (history.length > 20) history = history.slice(-20);
+  if (!saveHistory(history)) {
+    var message = document.getElementById('save-confirm');
+    message.textContent = 'Could not save: browser storage is unavailable or full.';
+    message.style.display = 'inline';
+    return;
+  }
+  document.getElementById('save-confirm').textContent = 'Saved!';
+  renderHistory();
+
+  // Show confirmation
+  var confirm = document.getElementById('save-confirm');
+  confirm.style.display = 'inline';
+  setTimeout(function() { confirm.style.display = 'none'; }, 2000);
+}
+
+function clearHistory() {
+  if (confirm('Clear all saved readings?')) {
+    try { localStorage.removeItem('diabetesRiskHistory'); } catch (e) {}
+    renderHistory();
+  }
+}
+
+function readingDetails(r) {
+  if (r.model !== 'brfss') {
+    // Saved by the earlier Pima-based version of this page
+    return '<span style="color:#a0aec0;">Old Pima model: glucose ' + r.glucose + ', BP ' + r.bp + '</span>';
+  }
+  return 'BP ' + (r.highBP ? 'high' : 'ok') + ', chol ' + (r.highChol ? 'high' : 'ok') + ', health ' + GENHLTH_NAMES[r.genHlth] + ', ' + (r.active ? 'active' : 'inactive') + ', age ' + r.age;
+}
+
+function trendCell(r, prev) {
+  if (!prev) return '<span style="color:#a0aec0;">--</span>';
+  // Scores from the old Pima model are on a different scale -- do not compare
+  if ((r.model === 'brfss') !== (prev.model === 'brfss')) return '<span style="color:#a0aec0;" title="Different model">n/a</span>';
+  var diff = r.risk - prev.risk;
+  if (diff > 2) return '<span class="trend-up" title="Risk increased">&#9650; +' + diff + '</span>';
+  if (diff < -2) return '<span class="trend-down" title="Risk decreased">&#9660; ' + diff + '</span>';
+  return '<span class="trend-same" title="About the same">&#9654; 0</span>';
+}
+
+function renderHistory() {
+  var history = getHistory().filter(r => r.model === 'brfss');
+  var container = document.getElementById('history-content');
+  var clearBtn = document.getElementById('clear-history-btn');
+
+  if (history.length === 0) {
+    container.innerHTML = '<div class="history-empty">No readings saved yet. Click "Save This Reading" to start tracking.</div>';
+    clearBtn.style.display = 'none';
+    return;
+  }
+
+  clearBtn.style.display = 'inline-block';
+
+  // Show last 5
+  var start = Math.max(0, history.length - 5);
+  var html = '<table class="history-table"><thead><tr><th>Date</th><th>Risk</th><th>BMI</th><th>Answers</th><th>Trend</th></tr></thead><tbody>';
+
+  for (var i = start; i < history.length; i++) {
+    var r = history[i];
+    var d = new Date(r.date);
+    var dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+
+    html += '<tr>';
+    html += '<td>' + dateStr + '</td>';
+    html += '<td><strong>' + r.risk + '%</strong></td>';
+    html += '<td>' + r.bmi + '</td>';
+    html += '<td>' + readingDetails(r) + '</td>';
+    html += '<td>' + trendCell(r, i > 0 ? history[i - 1] : null) + '</td>';
+    html += '</tr>';
+  }
+
+  html += '</tbody></table>';
+  if (history.length > 5) {
+    html += '<div style="font-size:0.75rem; color:#a0aec0; margin-top:6px;">Showing last 5 of ' + history.length + ' readings</div>';
+  }
+  container.innerHTML = html;
+}
+
+// ===== DARK MODE TOGGLE =====
+function toggleDarkMode() {
+  var isDark = document.body.classList.toggle('dark');
+  var btn = document.getElementById('dark-toggle');
+  btn.innerHTML = isDark ? '&#9788;' : '&#9789;';
+  try {
+    localStorage.setItem('diabetesDarkMode', isDark ? '1' : '0');
+  } catch (e) {}
+}
+
+function loadDarkMode() {
+  try {
+    var pref = localStorage.getItem('diabetesDarkMode');
+    if (pref === '1') {
+      document.body.classList.add('dark');
+      document.getElementById('dark-toggle').innerHTML = '&#9788;';
+    }
+  } catch (e) {}
+}
+
+// ===== PRINT TIMESTAMP =====
+window.addEventListener('beforeprint', function() {
+  document.getElementById('print-timestamp').textContent = 'Printed on: ' + new Date().toLocaleString();
+});
+
+function onInput() {
+  // Update slider displays
+  ['age', 'bmi'].forEach(id => {
+    const el = document.getElementById(id);
+    const val = parseFloat(el.value);
+    document.getElementById(id + '-val').textContent = id === 'bmi' ? val.toFixed(1) : String(val);
+    const [text, cls] = getStatus(id, val);
+    const statusEl = document.getElementById(id + '-status');
+    statusEl.textContent = text;
+    statusEl.className = 'status-tag ' + cls;
+  });
+
+  // Calculate risk
+  const result = calculateRisk();
+  lastResult = result;
+  const risk = result.risk;
+
+  const L = tr();
+  // Band on the displayed (rounded) percent so the label always matches the number shown
+  const levelClass = getRiskLevel(risk);
+  const level = L.level[levelClass];
+
+  const resultEl = document.getElementById('result');
+  resultEl.className = 'result-box ' + levelClass;
+
+  const circle = document.getElementById('risk-circle');
+  circle.className = 'risk-circle ' + levelClass;
+  circle.textContent = risk + '%';
+  const ringDeg = Math.min(Math.max(risk, 0), 100) / 100 * 360;
+  const ringColor = { low: '#48bb78', moderate: '#ecc94b', high: '#fc8181' }[levelClass];
+  document.getElementById('risk-gauge').style.background = 'conic-gradient(' + ringColor + ' ' + ringDeg + 'deg, #e2e8f0 ' + ringDeg + 'deg)';
+
+  document.getElementById('risk-label').textContent = level;
+  document.getElementById('risk-sublabel').textContent = (currentMode === 'beginner' ? L.summaryHome : L.summaryExpert).replace('{r}', risk);
+  document.getElementById('next-steps-title').textContent = L.nextTitle;
+  document.getElementById('disclaimer-title').textContent = L.disclaimerTitle;
+  document.getElementById('disclaimer-detail').textContent = L.disclaimer;
+
+  const bar = document.getElementById('risk-bar');
+  bar.style.width = risk + '%';
+  bar.style.background = ringColor;
+
+  // Factors
+  const factors = buildFactors(result);
+  const factorsEl = document.getElementById('factors');
+  let html = '<h3>' + (currentMode === 'beginner' ? 'What affects your result' : 'Key Factors (coef x z)') + '</h3>';
+  html += '<div style="font-size:0.72rem; color:#a0aec0; margin-bottom:4px;">Number = contribution to the model\'s log-odds (coef x standardized value). Positive raises risk, negative lowers it.' +
+    (currentMode === 'expert' ? ' Intercept ' + MODEL.intercept + '; logit = ' + (Math.log(result.riskExact / (100 - result.riskExact))).toFixed(3) + '.' : '') + '</div>';
+  factors.forEach(f => {
+    html += '<div class="factor-item"><span>' + f.name + '</span><span class="tag ' + f.cls + '">' + f.tag + '</span></div>';
+  });
+  factorsEl.innerHTML = html;
+
+  // Next steps
+  const stepsEl = document.getElementById('next-steps');
+  stepsEl.innerHTML = '<p style="margin-top:6px">' + L.next[levelClass] + '</p>';
+
+  // Update extra panels
+  renderTips(result);
+  renderComparison(risk);
+}
+
+// Initialize
+fillExpertHints();
+loadDarkMode();
+setMode('beginner');
+renderHistory();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heart Disease Risk Screener</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f4f8; color: #1a202c; }
+
+  .navbar { background: linear-gradient(135deg, #1e3a5f, #2d6a9f); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .navbar h1 { color: white; font-size: 1.4rem; }
+  .navbar .right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .navbar .badge { background: rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+
+  .mode-toggle { display: flex; background: rgba(255,255,255,0.15); border-radius: 20px; overflow: hidden; }
+  .mode-btn { padding: 6px 16px; border: none; background: none; color: rgba(255,255,255,0.7); font-size: 0.85rem; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+  .mode-btn.active { background: white; color: #1e3a5f; border-radius: 20px; }
+
+  .lang-select { padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.15); color: white; font-size: 0.8rem; cursor: pointer; }
+  .lang-select option { color: #1a202c; background: white; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+  .warning-banner { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .warning-banner .icon { font-size: 1.4rem; }
+  .warning-banner p { font-size: 0.9rem; color: #92400e; }
+
+  .emergency { background: #fff5f5; border: 2px solid #e53e3e; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; color: #742a2a; font-size: 0.85rem; line-height: 1.5; }
+  .emergency strong.title { display: block; color: #c53030; font-size: 0.95rem; margin-bottom: 4px; }
+  .emergency ul { margin: 4px 0 4px 20px; }
+
+  .presets { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; font-size: 0.85rem; color: #4a5568; }
+  .preset-btn { padding: 6px 14px; border-radius: 16px; border: 1px solid #2d6a9f; background: white; color: #2d6a9f; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
+  .preset-btn:hover { background: #ebf8ff; }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .navbar { padding: 14px 16px; }
+    .container { padding: 16px; }
+    .right-col { position: static; }
+  }
+
+  .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; }
+  .card h2 { font-size: 1.1rem; margin-bottom: 16px; color: #1e3a5f; }
+
+  .form-group { margin-bottom: 14px; transition: opacity 0.3s; }
+  .form-group > label:first-child { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #4a5568; }
+  .form-group .hint { font-size: 0.75rem; color: #a0aec0; margin-bottom: 4px; }
+  .form-group .home-hint { font-size: 0.75rem; color: #2d6a9f; margin-bottom: 4px; font-style: italic; }
+  .enc { display: inline-block; font-family: Consolas, monospace; font-size: 0.72rem; background: #edf2f7; color: #4a5568; padding: 1px 6px; border-radius: 4px; margin-left: 6px; font-weight: 400; }
+  .expert-only.enc { display: inline-block; }
+  body.beginner .expert-only.enc { display: none; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row input[type="range"] { flex: 1; accent-color: #2d6a9f; height: 6px; min-width: 0; }
+  .slider-row .value { min-width: 45px; text-align: right; font-weight: 600; color: #2d6a9f; font-size: 0.95rem; }
+  .slider-row .status-tag { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; min-width: 65px; text-align: center; }
+  .status-tag.normal { background: #c6f6d5; color: #276749; }
+  .status-tag.warning { background: #fefcbf; color: #975a16; }
+  .status-tag.danger { background: #fed7d7; color: #c53030; }
+  .band-note { font-size: 0.72rem; color: #718096; margin-top: 2px; }
+
+  .radio-group { display: flex; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+  .radio-group label { display: flex; align-items: center; gap: 5px; font-weight: 400; font-size: 0.9rem; cursor: pointer; }
+
+  .bmi-calc { margin-top: 6px; padding: 8px 10px; background: #f7fafc; border-radius: 6px; font-size: 0.78rem; color: #4a5568; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .bmi-calc input, .bmi-calc select { width: 70px; padding: 3px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.8rem; }
+  .bmi-calc select { width: auto; }
+  .bmi-calc button { padding: 3px 10px; border: none; border-radius: 4px; background: #2d6a9f; color: white; font-size: 0.78rem; cursor: pointer; }
+
+  .result-box { padding: 20px; border-radius: 8px; transition: all 0.3s ease; }
+  .result-box.low { background: #f0fff4; border: 2px solid #48bb78; }
+  .result-box.moderate { background: #fffff0; border: 2px solid #ecc94b; }
+  .result-box.high { background: #fff5f5; border: 2px solid #fc8181; }
+
+  .risk-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .risk-circle { width: 72px; height: 72px; min-width: 72px; min-height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; font-weight: 700; color: white; transition: all 0.3s ease; flex-shrink: 0; aspect-ratio: 1; overflow: hidden; }
+  .risk-circle.low { background: #48bb78; }
+  .risk-circle.moderate { background: #ecc94b; color: #744210; }
+  .risk-circle.high { background: #fc8181; }
+  .risk-gauge { width: 88px; height: 88px; min-width: 88px; min-height: 88px; border-radius: 50%; aspect-ratio: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: conic-gradient(#48bb78 0deg, #e2e8f0 0deg); transition: background 0.4s ease; }
+  .risk-label { font-size: 1.2rem; font-weight: 700; }
+  .risk-sublabel { color: #4a5568; font-size: 0.85rem; margin-top: 2px; line-height: 1.4; }
+
+  .risk-bar-container { margin: 12px 0; }
+  .risk-bar-bg { height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; position: relative; }
+  .risk-bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease, background 0.4s ease; }
+  .risk-bar-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: #2d3748; opacity: 0.6; }
+  .risk-bar-labels { position: relative; height: 14px; font-size: 0.68rem; color: #718096; margin-top: 4px; }
+  .risk-bar-labels span { position: absolute; white-space: nowrap; }
+
+  .factors { margin-top: 16px; }
+  .factors h3 { font-size: 0.95rem; margin-bottom: 8px; color: #4a5568; }
+  .factor-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #edf2f7; font-size: 0.85rem; }
+  .factor-item .tag { padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+  .factor-item .contrib { font-family: Consolas, monospace; font-size: 0.75rem; color: #4a5568; margin-left: 6px; }
+  .tag.risk { background: #fed7d7; color: #c53030; }
+  .tag.ok { background: #c6f6d5; color: #276749; }
+  .tag.neutral { background: #edf2f7; color: #718096; }
+
+  .next-box { margin-top: 12px; padding: 12px; background: #ebf8ff; border-radius: 6px; font-size: 0.82rem; color: #2a4365; line-height: 1.5; }
+  .next-box .urgent { margin-top: 6px; color: #c53030; font-weight: 600; }
+
+  .disclaimer { margin-top: 16px; padding: 12px; background: #edf2f7; border-radius: 6px; font-size: 0.78rem; color: #718096; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: #f7fafc; border-radius: 8px; padding: 14px; text-align: center; }
+  .stat-card .num { font-size: 1.5rem; font-weight: 700; color: #2d6a9f; }
+  .stat-card .label { font-size: 0.72rem; color: #718096; margin-top: 2px; }
+
+  .data-sources { margin-top: 12px; padding: 12px; background: #f7fafc; border-radius: 8px; }
+  .data-sources h3 { font-size: 0.85rem; color: #4a5568; margin-bottom: 6px; }
+  .data-sources ul { list-style: none; font-size: 0.78rem; color: #718096; }
+  .data-sources li { padding: 2px 0; }
+  .data-sources li::before { content: ''; display: inline-block; width: 6px; height: 6px; background: #2d6a9f; border-radius: 50%; margin-right: 6px; }
+
+  .right-col { position: sticky; top: 24px; align-self: start; }
+
+  .beginner-note { background: #ebf8ff; border: 1px solid #90cdf4; border-radius: 8px; padding: 14px; margin-bottom: 16px; font-size: 0.85rem; color: #2a4365; line-height: 1.6; }
+  .beginner-note strong { color: #1e3a5f; }
+
+  .compare { margin-top: 24px; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .compare-table th, .compare-table td { padding: 7px 8px; border-bottom: 1px solid #edf2f7; text-align: left; }
+  .compare-table th { color: #4a5568; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .compare-table td.you { font-weight: 700; color: #2d6a9f; }
+  .compare-note { font-size: 0.75rem; color: #718096; margin-top: 8px; }
+  .table-wrap { overflow-x: auto; }
+
+  .info-section { margin-top: 24px; }
+  .info-section h2 { font-size: 1.1rem; color: #1e3a5f; margin-bottom: 12px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-card { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .info-card h3 { font-size: 0.9rem; color: #2d6a9f; margin-bottom: 6px; }
+  .info-card p { font-size: 0.82rem; color: #718096; line-height: 1.5; }
+
+  footer { text-align: center; padding: 24px; color: #a0aec0; font-size: 0.8rem; }
+
+  .beginner-only { display: none; }
+  .expert-only { display: block; }
+  body.beginner .beginner-only { display: block; }
+  body.beginner .expert-only { display: none; }
+</style>
+</head>
+<body class="beginner">
+<!-- HEALTH_PAGE_TRANSLATION_START -->
+<style>
+#health-page-translation{font:14px/1.5 system-ui,sans-serif;margin:12px auto;padding:12px 16px;max-width:1200px;border:1px solid #bed2e5;border-radius:12px;background:#fff;color:#19324a;text-align:start}
+#health-page-translation summary{cursor:pointer;font-weight:650}
+#health-page-translation .translation-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+#health-page-translation select,#health-page-translation button{font:inherit;border:1px solid #a9bfd2;border-radius:6px;padding:7px 10px;background:white;color:#19324a;max-width:100%}
+#health-page-translation button{cursor:pointer}#health-page-translation button:disabled{opacity:.55;cursor:default}
+#health-page-translation a{color:#155a91}#health-translation-status{margin-top:8px;white-space:pre-wrap}
+body.dark #health-page-translation{background:#223346;color:#edf4ff;border-color:#506579}
+body.dark #health-page-translation a{color:#9bd3ff}
+@media print{#health-page-translation{display:none}}
+</style>
+<details id="health-page-translation">
+  <summary>🌐 Translate the whole page · Free, no API key</summary>
+  <p>Use the translation built into <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong> to translate questions, explanations and results.</p>
+  <ol style="margin:10px 0 10px 22px">
+    <li>Open this page in Chrome or Edge.</li>
+    <li>Right-click an empty area and choose <strong>Translate</strong>, or choose Translate in the browser's menu.</li>
+    <li>Choose your language in the translation pop-up. Restore the original from that same pop-up.</li>
+  </ol>
+  <p>If this app's browser has no Translate menu, copy this page's address into Chrome or Edge. This page cannot open the browser's translation menu automatically.</p>
+  <p>The existing language selector still provides offline result translations in English, Hindi, Gujarati and Spanish.</p>
+  <p style="font-size:12px">Languages depend on your browser. Browser translation is handled by its provider; machine translations can contain errors. If an updated result stays untranslated, translate the page again.</p>
+  <p><a href="./index.html#languages">Translation help &amp; home</a></p>
+</details>
+<!-- HEALTH_PAGE_TRANSLATION_END -->
+
+
+<div class="navbar">
+  <h1>Heart Disease Risk Screener</h1>
+  <div class="right">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-beginner" onclick="setMode('beginner')">Home</button>
+      <button class="mode-btn" id="btn-expert" onclick="setMode('expert')">Expert</button>
+    </div>
+    <select class="lang-select" id="lang-select" onchange="onLangChange()" title="Result card language">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी (Hindi)</option>
+      <option value="gu">ગુજરાતી (Gujarati)</option>
+      <option value="es">Espa&ntilde;ol</option>
+    </select>
+    <span class="badge">Logistic Regression | 253,680 US adults (CDC BRFSS 2015)</span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="warning-banner">
+    <span class="icon">!</span>
+    <p id="warning-text"><strong>Screening aid only &mdash; not a medical diagnosis.</strong> This tool estimates how common coronary heart disease or heart attack is among US adults who answered a 2015 CDC health survey the way you do. Always consult a healthcare professional.</p>
+  </div>
+
+  <!-- Emergency note: separate from the screener -->
+  <div class="emergency" id="emergency-note" role="alert">
+    <strong class="title">Heart attack warning signs &mdash; call emergency services now (911 US, 112 Europe/India, 108 India ambulance)</strong>
+    Do not use this screener if you have these symptoms right now:
+    <ul>
+      <li>Chest pain, pressure, squeezing or fullness lasting more than a few minutes, or that goes away and comes back</li>
+      <li>Pain or discomfort spreading to the arm(s), back, neck, jaw or stomach</li>
+      <li>Shortness of breath, cold sweat, nausea, or sudden light-headedness</li>
+    </ul>
+    Women, older adults and people with diabetes more often have the less typical signs (breathlessness, nausea, back or jaw pain) without strong chest pain.
+  </div>
+
+  <!-- BEGINNER welcome note -->
+  <div class="beginner-note beginner-only" id="beginner-welcome">
+    <strong>Home Mode</strong> &mdash; 13 simple yes/no-style questions; no lab tests needed. Answer the way you would on a phone survey. Switch to Expert mode to see the raw encoded values the model uses and how much each answer pushes the estimate up or down.
+  </div>
+
+  <div class="presets">
+    <span>Try a demo:</span>
+    <button class="preset-btn" onclick="applyPreset('healthy')">Healthy</button>
+    <button class="preset-btn" onclick="applyPreset('borderline')">Borderline</button>
+    <button class="preset-btn" onclick="applyPreset('high')">High-risk</button>
+    <button class="preset-btn" onclick="applyPreset('default')">Reset</button>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT: Input form -->
+    <div class="card">
+      <h2 id="form-title">Your Health Information</h2>
+
+      <div class="form-group" id="fg-Age">
+        <label>Age (years) <span class="enc expert-only" id="enc-Age"></span></label>
+        <div class="slider-row">
+          <input type="range" id="age-years" min="18" max="99" value="30" oninput="onInput()">
+          <span class="value" id="age-years-val">30</span>
+          <span class="status-tag" id="age-years-status"></span>
+        </div>
+        <div class="band-note expert-only" id="age-band-note"></div>
+      </div>
+
+      <div class="form-group" id="fg-Sex">
+        <label>Sex <span class="enc expert-only" id="enc-Sex"></span></label>
+        <div class="radio-group">
+          <label><input type="radio" name="Sex" value="0" checked onchange="onInput()"> Female</label>
+          <label><input type="radio" name="Sex" value="1" onchange="onInput()"> Male</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-HighBP">
+        <label>High blood pressure <span class="enc expert-only" id="enc-HighBP"></span></label>
+        <div class="home-hint">Has a doctor or nurse ever told you that you have high blood pressure?</div>
+        <div class="radio-group">
+          <label><input type="radio" name="HighBP" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="HighBP" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-HighChol">
+        <label>High cholesterol <span class="enc expert-only" id="enc-HighChol"></span></label>
+        <div class="home-hint">Has a doctor or nurse ever told you that you have high cholesterol?</div>
+        <div class="radio-group">
+          <label><input type="radio" name="HighChol" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="HighChol" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-BMI">
+        <label>BMI (body mass index) <span class="enc expert-only" id="enc-BMI"></span></label>
+        <div class="slider-row">
+          <input type="range" id="bmi" min="12" max="60" step="0.1" value="23" oninput="onInput()">
+          <span class="value" id="bmi-val">23.0</span>
+          <span class="status-tag" id="bmi-status"></span>
+        </div>
+        <div class="bmi-calc">
+          <span>Don't know it?</span>
+          <select id="bmi-units" onchange="onBmiUnits()">
+            <option value="metric">cm / kg</option>
+            <option value="imperial">in / lb</option>
+          </select>
+          <input type="number" id="bmi-height" placeholder="cm" min="50" max="250">
+          <input type="number" id="bmi-weight" placeholder="kg" min="20" max="400">
+          <button type="button" onclick="calcBmi()">Calculate</button>
+          <span id="bmi-calc-msg"></span>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-Smoker">
+        <label>Smoking history <span class="enc expert-only" id="enc-Smoker"></span></label>
+        <div class="home-hint">Have you smoked at least 100 cigarettes (5 packs) in your whole life?</div>
+        <div class="radio-group">
+          <label><input type="radio" name="Smoker" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="Smoker" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-PhysActivity">
+        <label>Physical activity <span class="enc expert-only" id="enc-PhysActivity"></span></label>
+        <div class="home-hint">Any physical activity or exercise in the past 30 days, not counting your job?</div>
+        <div class="radio-group">
+          <label><input type="radio" name="PhysActivity" value="1" checked onchange="onInput()"> Yes</label>
+          <label><input type="radio" name="PhysActivity" value="0" onchange="onInput()"> No</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-Fruits">
+        <label>Fruit <span class="enc expert-only" id="enc-Fruits"></span></label>
+        <div class="home-hint">Do you eat fruit 1 or more times per day?</div>
+        <div class="radio-group">
+          <label><input type="radio" name="Fruits" value="1" checked onchange="onInput()"> Yes</label>
+          <label><input type="radio" name="Fruits" value="0" onchange="onInput()"> No</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-Veggies">
+        <label>Vegetables <span class="enc expert-only" id="enc-Veggies"></span></label>
+        <div class="home-hint">Do you eat vegetables 1 or more times per day?</div>
+        <div class="radio-group">
+          <label><input type="radio" name="Veggies" value="1" checked onchange="onInput()"> Yes</label>
+          <label><input type="radio" name="Veggies" value="0" onchange="onInput()"> No</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-HvyAlcoholConsump">
+        <label>Heavy drinking <span class="enc expert-only" id="enc-HvyAlcoholConsump"></span></label>
+        <div class="home-hint">Men: more than 14 drinks a week. Women: more than 7 drinks a week.</div>
+        <div class="radio-group">
+          <label><input type="radio" name="HvyAlcoholConsump" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="HvyAlcoholConsump" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-GenHlth">
+        <label>General health <span class="enc expert-only" id="enc-GenHlth"></span></label>
+        <div class="home-hint">In general, would you say your health is...</div>
+        <div class="radio-group">
+          <label><input type="radio" name="GenHlth" value="1" onchange="onInput()"> Excellent</label>
+          <label><input type="radio" name="GenHlth" value="2" checked onchange="onInput()"> Very good</label>
+          <label><input type="radio" name="GenHlth" value="3" onchange="onInput()"> Good</label>
+          <label><input type="radio" name="GenHlth" value="4" onchange="onInput()"> Fair</label>
+          <label><input type="radio" name="GenHlth" value="5" onchange="onInput()"> Poor</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-Stroke">
+        <label>Stroke <span class="enc expert-only" id="enc-Stroke"></span></label>
+        <div class="home-hint">Has a doctor ever told you that you had a stroke?</div>
+        <div class="radio-group">
+          <label><input type="radio" name="Stroke" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="Stroke" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="fg-Diabetes">
+        <label>Diabetes or prediabetes <span class="enc expert-only" id="enc-Diabetes"></span></label>
+        <div class="home-hint">Has a doctor ever told you that you have diabetes or prediabetes?</div>
+        <div class="radio-group">
+          <label><input type="radio" name="Diabetes" value="0" checked onchange="onInput()"> No</label>
+          <label><input type="radio" name="Diabetes" value="1" onchange="onInput()"> Yes</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="right-col">
+      <div class="card">
+        <h2>Screening Result</h2>
+        <div id="result" class="result-box low">
+          <div class="risk-header">
+            <div id="risk-gauge" class="risk-gauge"><div id="risk-circle" class="risk-circle low">--%</div></div>
+            <div>
+              <div id="risk-label" class="risk-label">Adjust values to begin</div>
+              <div id="risk-sublabel" class="risk-sublabel">Result updates automatically</div>
+              <div id="risk-technical" class="risk-sublabel expert-only"></div>
+            </div>
+          </div>
+
+          <div class="risk-bar-container">
+            <div class="risk-bar-bg" id="risk-bar-bg">
+              <div id="risk-bar" class="risk-bar-fill" style="width:0%; background:#48bb78;"></div>
+              <div class="risk-bar-mark" style="left:5%;"></div>
+              <div class="risk-bar-mark" style="left:10.5%;"></div>
+            </div>
+            <div class="risk-bar-labels">
+              <span style="left:0;">0%</span>
+              <span style="left:12%;">&#9650; cut-offs 5% / 10.5%</span>
+              <span style="right:0;">100%</span>
+            </div>
+          </div>
+
+          <div class="factors" id="factors"></div>
+
+          <div class="next-box" id="next-box">
+            <strong id="next-title">What should you do next?</strong>
+            <div id="next-steps"></div>
+          </div>
+
+          <div class="disclaimer" id="disclaimer"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 16px;">
+        <h2>Model Performance (held-out test set)</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="num">0.844</div>
+            <div class="label">AUC</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">76.7%</div>
+            <div class="label">Recall: caught 3,666 of 4,779 cases</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">25.5%</div>
+            <div class="label">Precision (flagged who really had it)</div>
+          </div>
+          <div class="stat-card">
+            <div class="num">76.7%</div>
+            <div class="label">Accuracy &middot; 28.3% of people flagged</div>
+          </div>
+        </div>
+        <div class="data-sources">
+          <h3>Who it works for (recall on test set)</h3>
+          <ul>
+            <li>Women: 68.4% of cases caught &middot; Men: 83.0%</li>
+            <li>Ages 18&ndash;44: only 12.4% caught (misses most young cases)</li>
+            <li>Ages 45&ndash;64: 64.4% &middot; Ages 65+: 86.1%</li>
+            <li>9.4% of the 253,680 adults reported heart disease or heart attack</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARISON: user vs dataset -->
+  <div class="card compare">
+    <h2>You vs. the 253,680 survey respondents</h2>
+    <div class="table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr><th>Question</th><th>You</th><th>No heart disease (229,787)</th><th>Heart disease / attack (23,893)</th></tr>
+        </thead>
+        <tbody id="compare-body"></tbody>
+      </table>
+    </div>
+    <p class="compare-note">Yes/no questions show the share answering "yes" in each group; BMI, general health (1 = excellent ... 5 = poor) and age band show group averages. Computed from the full CDC BRFSS 2015 file (HeartDiseaseorAttack column).</p>
+  </div>
+
+  <!-- Info section -->
+  <div class="info-section">
+    <h2>About This Model</h2>
+    <div class="info-grid">
+      <div class="info-card">
+        <h3>What it predicts</h3>
+        <p>The survey asked people whether they <strong>have ever had</strong> coronary heart disease or a heart attack. So the number shown is how common that is among people with answers like yours. It is a screening aid, not a diagnosis, and <strong>not</strong> a 10-year forecast of a future heart attack.</p>
+      </div>
+      <div class="info-card">
+        <h3>How it works</h3>
+        <p>Standard scaling + logistic regression (scikit-learn), trained on 80% of the CDC BRFSS 2015 "Diabetes Health Indicators" data (UCI id 891). The exact coefficients are embedded in this page, so it runs fully offline and outputs real probabilities. "High" means at or above 10.5%: the highest cut-off that still caught at least 75% of cases in 5-fold cross-validation on the training data.</p>
+      </div>
+      <div class="info-card">
+        <h3>Test-set results</h3>
+        <p>On the 20% held out and never seen in training: AUC 0.844, recall 76.7% (3,666 of 4,779 cases caught), precision 25.5%, accuracy 76.7%, and 28.3% of people flagged. Most people flagged do <strong>not</strong> have heart disease; the tool is tuned to miss fewer cases.</p>
+      </div>
+      <div class="info-card">
+        <h3>Diverse, but not global</h3>
+        <p>253,680 US adults, men and women, ages 18 to 80+, from all groups the CDC telephone survey reaches. US only. The cleaned dataset has no race/ethnicity column, so we <strong>could not check accuracy by ethnicity</strong>. We checked by sex (recall 68.4% women, 83.0% men) and age: it catches only <strong>12.4% of cases in adults under 45</strong>, so a low result for a younger person means very little.</p>
+      </div>
+      <div class="info-card">
+        <h3>Limitations</h3>
+        <p>Answers are self-reported and from 2015. Income, education and health insurance were left out on purpose: a health screener should not score people on how much money they have. Some coefficients are survey quirks, not advice: heavy drinking nudges the estimate slightly <em>down</em>, and fruit, vegetables and exercise have almost no effect once general health is counted. Heavy drinking still harms the heart.</p>
+      </div>
+      <div class="info-card">
+        <h3>What to do with results</h3>
+        <p>A high result means talk to a doctor about checking your heart (blood pressure, cholesterol, ECG as they see fit). A low result does <strong>not</strong> rule out heart disease. The previous version (Cleveland/UCI clinical model with ECG and chest-pain inputs) is kept in HealthScreener_Backups.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Heart Disease Risk Screener &mdash; Hackathon Practice Project &mdash; Not for clinical use<br>
+  Data: CDC BRFSS 2015 Diabetes Health Indicators (UCI ML Repository id 891; Kaggle version by Alex Teboul)
+</footer>
+
+<script>
+// ===== MODEL (copied exactly from brfss_models.json, key "heart") =====
+// Target: HeartDiseaseorAttack (coronary heart disease or myocardial infarction)
+const MODEL = {
+  intercept: -3.0997,
+  mean:  { HighBP: 0.4292, HighChol: 0.4248, BMI: 28.3811, Smoker: 0.4431, PhysActivity: 0.7568, Fruits: 0.6347, Veggies: 0.8119, HvyAlcoholConsump: 0.056, GenHlth: 2.5115, Sex: 0.4399, Age: 8.0367, Stroke: 0.0403, Diabetes: 0.1395 },
+  scale: { HighBP: 0.495, HighChol: 0.4943, BMI: 6.6109, Smoker: 0.4968, PhysActivity: 0.429, Fruits: 0.4815, Veggies: 0.3908, HvyAlcoholConsump: 0.2299, GenHlth: 1.0688, Sex: 0.4964, Age: 3.0541, Stroke: 0.1968, Diabetes: 0.3464 },
+  coef:  { HighBP: 0.2693, HighChol: 0.3055, BMI: 0.031, Smoker: 0.1965, PhysActivity: -0.004, Fruits: 0.0001, Veggies: 0.0121, HvyAlcoholConsump: -0.0797, GenHlth: 0.6305, Sex: 0.344, Age: 0.787, Stroke: 0.2057, Diabetes: 0.1027 }
+};
+const FEATURES = ['HighBP','HighChol','BMI','Smoker','PhysActivity','Fruits','Veggies','HvyAlcoholConsump','GenHlth','Sex','Age','Stroke','Diabetes'];
+const RADIO_FEATURES = ['HighBP','HighChol','Smoker','PhysActivity','Fruits','Veggies','HvyAlcoholConsump','GenHlth','Sex','Stroke','Diabetes'];
+
+// Bands (percent): Low < 5, Moderate 5-10.5, High >= 10.5
+const BAND_MODERATE = 5;
+const BAND_HIGH = 10.5;
+
+const AGE_BANDS = ['18-24','25-29','30-34','35-39','40-44','45-49','50-54','55-59','60-64','65-69','70-74','75-79','80+'];
+const GENHLTH_LABELS = ['', 'Excellent', 'Very good', 'Good', 'Fair', 'Poor'];
+
+// Group means from brfss2015_diabetes_indicators.csv (pandas groupby HeartDiseaseorAttack; Diabetes = Diabetes_binary)
+const DATASET_AVG = {
+  noHeart: { HighBP: 0.396, HighChol: 0.395, BMI: 28.27, Smoker: 0.425, PhysActivity: 0.769, Fruits: 0.637, Veggies: 0.816, HvyAlcoholConsump: 0.058, GenHlth: 2.422, Sex: 0.427, Age: 7.814, Stroke: 0.028, Diabetes: 0.120 },
+  heart:   { HighBP: 0.750, HighChol: 0.701, BMI: 29.467, Smoker: 0.619, PhysActivity: 0.640, Fruits: 0.605, Veggies: 0.764, HvyAlcoholConsump: 0.035, GenHlth: 3.368, Sex: 0.573, Age: 10.131, Stroke: 0.165, Diabetes: 0.330 }
+};
+
+// Demo presets (risk verified in Python with the coefficients above):
+// default 0.3% Low, healthy 0.4% Low, borderline 7.7% Moderate, high 45% High
+const DEFAULTS = { ageYears: 30, HighBP: 0, HighChol: 0, BMI: 23, Smoker: 0, PhysActivity: 1, Fruits: 1, Veggies: 1, HvyAlcoholConsump: 0, GenHlth: 2, Sex: 0, Stroke: 0, Diabetes: 0 };
+const PRESETS = {
+  default:    {},
+  healthy:    { ageYears: 35, BMI: 23 },
+  borderline: { ageYears: 52, Sex: 1, HighBP: 1, BMI: 28, Smoker: 1, GenHlth: 3 },
+  high:       { ageYears: 67, Sex: 1, HighBP: 1, HighChol: 1, BMI: 32, Smoker: 1, PhysActivity: 0, Veggies: 0, GenHlth: 4, Diabetes: 1 }
+};
+
+// Friendly text for the factors list
+const FEATURE_TEXT = {
+  HighBP:            { name: 'High blood pressure', yes: 'Told you have high blood pressure', no: 'No high blood pressure diagnosis' },
+  HighChol:          { name: 'High cholesterol', yes: 'Told you have high cholesterol', no: 'No high cholesterol diagnosis' },
+  BMI:               { name: 'BMI' },
+  Smoker:            { name: 'Smoked 100+ cigarettes', yes: 'Smoked 100+ cigarettes in your life', no: 'Never smoked 100 cigarettes' },
+  PhysActivity:      { name: 'Physical activity', yes: 'Active in the past 30 days', no: 'No exercise in the past 30 days' },
+  Fruits:            { name: 'Fruit daily', yes: 'Eat fruit daily', no: 'Fruit less than daily' },
+  Veggies:           { name: 'Vegetables daily', yes: 'Eat vegetables daily', no: 'Vegetables less than daily' },
+  HvyAlcoholConsump: { name: 'Heavy drinking', yes: 'Heavy drinking', no: 'No heavy drinking' },
+  GenHlth:           { name: 'General health' },
+  Sex:               { name: 'Sex', yes: 'Male', no: 'Female' },
+  Age:               { name: 'Age' },
+  Stroke:            { name: 'Past stroke', yes: 'Had a stroke', no: 'No stroke' },
+  Diabetes:          { name: 'Diabetes / prediabetes', yes: 'Diabetes or prediabetes', no: 'No diabetes or prediabetes' }
+};
+
+// ===== TRANSLATIONS (risk label, summary, next steps, disclaimer) =====
+const I18N = {
+  en: {
+    level: { low: 'LOW RISK', moderate: 'MODERATE RISK', high: 'HIGH RISK — follow-up recommended' },
+    summary: r => 'About ' + r + '% of surveyed US adults with answers like yours reported coronary heart disease or a heart attack.',
+    nextTitle: 'What should you do next?',
+    next: {
+      low: 'Keep up healthy habits: stay active, eat well, do not smoke. Keep having regular checkups — this tool can miss cases, especially in people under 45.',
+      moderate: 'Mention this result at your next checkup. Ask to have your blood pressure and cholesterol checked, and stay active.',
+      high: 'Book an appointment with your doctor soon and mention this screening. They may check blood pressure, cholesterol and blood sugar, or order an ECG.'
+    },
+    urgent: 'Chest pain or pressure right now? Call emergency services immediately — do not wait for an appointment.',
+    disclaimer: 'SCREENING AID ONLY — not a diagnosis and not a 10-year forecast. Based on a 2015 US CDC telephone survey (self-reported answers). Does not replace a medical evaluation.'
+  },
+  hi: {
+    level: { low: 'कम जोखिम', moderate: 'मध्यम जोखिम', high: 'अधिक जोखिम — डॉक्टर से जाँच कराएँ' },
+    summary: r => 'आपके जैसे उत्तर देने वाले सर्वेक्षण किए गए अमेरिकी वयस्कों में से लगभग ' + r + '% ने कोरोनरी हृदय रोग या दिल का दौरा होने की बात बताई।',
+    nextTitle: 'आगे क्या करें?',
+    next: {
+      low: 'स्वस्थ आदतें जारी रखें: सक्रिय रहें, अच्छा भोजन करें, धूम्रपान न करें। नियमित जाँच कराते रहें — यह उपकरण कुछ मामलों को छोड़ सकता है, खासकर 45 वर्ष से कम उम्र के लोगों में।',
+      moderate: 'अगली जाँच में डॉक्टर को यह परिणाम बताएँ। रक्तचाप और कोलेस्ट्रॉल की जाँच कराएँ, और सक्रिय रहें।',
+      high: 'जल्द ही डॉक्टर से मिलें और यह स्क्रीनिंग परिणाम बताएँ। वे रक्तचाप, कोलेस्ट्रॉल, ब्लड शुगर या ECG की जाँच करा सकते हैं।'
+    },
+    urgent: 'अभी सीने में दर्द या दबाव है? तुरंत आपातकालीन सेवा को कॉल करें — अपॉइंटमेंट का इंतज़ार न करें।',
+    disclaimer: 'केवल स्क्रीनिंग सहायता — यह निदान या 10 साल का पूर्वानुमान नहीं है। 2015 के अमेरिकी CDC टेलीफ़ोन सर्वेक्षण (स्वयं बताए गए उत्तर) पर आधारित। डॉक्टर की जाँच का विकल्प नहीं।'
+  },
+  gu: {
+    level: { low: 'ઓછું જોખમ', moderate: 'મધ્યમ જોખમ', high: 'વધુ જોખમ — ડૉક્ટર પાસે તપાસ કરાવો' },
+    summary: r => 'તમારા જેવા જવાબ આપનાર સર્વેના અમેરિકન પુખ્ત વયના લોકોમાંથી આશરે ' + r + '% લોકોએ કોરોનરી હૃદયરોગ અથવા હાર્ટ એટેક હોવાનું જણાવ્યું.',
+    nextTitle: 'હવે શું કરવું?',
+    next: {
+      low: 'સ્વસ્થ ટેવો ચાલુ રાખો: સક્રિય રહો, સારો આહાર લો, ધૂમ્રપાન ન કરો. નિયમિત તપાસ કરાવતા રહો — આ સાધન કેટલાક કેસ ચૂકી શકે છે, ખાસ કરીને 45 વર્ષથી નાની ઉંમરના લોકોમાં.',
+      moderate: 'તમારી આગામી તપાસમાં ડૉક્ટરને આ પરિણામ જણાવો. બ્લડ પ્રેશર અને કોલેસ્ટ્રોલ તપાસાવો અને સક્રિય રહો.',
+      high: 'જલ્દી ડૉક્ટરને મળો અને આ સ્ક્રીનિંગ પરિણામ જણાવો. તેઓ બ્લડ પ્રેશર, કોલેસ્ટ્રોલ, બ્લડ શુગર અથવા ECG તપાસ કરાવી શકે છે.'
+    },
+    urgent: 'અત્યારે છાતીમાં દુખાવો કે દબાણ છે? તરત ઇમરજન્સી સેવાને કૉલ કરો — એપોઇન્ટમેન્ટની રાહ ન જુઓ.',
+    disclaimer: 'માત્ર સ્ક્રીનિંગ સહાય — આ નિદાન કે 10 વર્ષની આગાહી નથી. 2015ના અમેરિકન CDC ટેલિફોન સર્વે (જાતે આપેલા જવાબો) પર આધારિત. ડૉક્ટરની તપાસનો વિકલ્પ નથી.'
+  },
+  es: {
+    level: { low: 'RIESGO BAJO', moderate: 'RIESGO MODERADO', high: 'RIESGO ALTO — se recomienda seguimiento' },
+    summary: r => 'Alrededor del ' + r + '% de los adultos encuestados en EE. UU. con respuestas como las suyas informaron enfermedad coronaria o un ataque al corazón.',
+    nextTitle: '¿Qué hacer ahora?',
+    next: {
+      low: 'Mantenga hábitos saludables: actividad física, buena alimentación, no fumar. Siga con sus chequeos: esta herramienta puede pasar por alto casos, sobre todo en menores de 45 años.',
+      moderate: 'Mencione este resultado en su próximo chequeo. Pida que revisen su presión arterial y colesterol, y manténgase activo.',
+      high: 'Pida pronto una cita con su médico y mencione este resultado. Puede revisar su presión arterial, colesterol y azúcar en sangre, o pedir un ECG.'
+    },
+    urgent: '¿Dolor o presión en el pecho ahora mismo? Llame de inmediato a los servicios de emergencia; no espere a una cita.',
+    disclaimer: 'SOLO AYUDA DE DETECCIÓN — no es un diagnóstico ni un pronóstico a 10 años. Basado en una encuesta telefónica de los CDC de EE. UU. de 2015 (respuestas autodeclaradas). No reemplaza una evaluación médica.'
+  }
+};
+
+let currentMode = 'beginner';
+let currentLang = 'en';
+
+function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+
+function ageToBand(years) {
+  if (years < 25) return 1;
+  if (years >= 80) return 13;
+  return Math.min(13, 2 + Math.floor((years - 25) / 5));
+}
+
+function bandToYears(band) {
+  // approximate midpoint age of a (possibly fractional) band
+  if (band <= 1) return 21;
+  return 25 + 5 * (band - 2) + 2;
+}
+
+function getRadio(name) {
+  const el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? parseInt(el.value, 10) : 0;
+}
+
+function setRadio(name, value) {
+  const el = document.querySelector('input[name="' + name + '"][value="' + value + '"]');
+  if (el) el.checked = true;
+}
+
+function getValues() {
+  const values = {};
+  RADIO_FEATURES.forEach(f => { values[f] = getRadio(f); });
+  values.BMI = parseFloat(document.getElementById('bmi').value);
+  values.Age = ageToBand(parseInt(document.getElementById('age-years').value, 10));
+  return values;
+}
+
+function predictRisk(values) {
+  let logit = MODEL.intercept;
+  const contributions = {};
+  FEATURES.forEach(f => {
+    const z = (values[f] - MODEL.mean[f]) / MODEL.scale[f];
+    contributions[f] = MODEL.coef[f] * z;
+    logit += contributions[f];
+  });
+  return { prob: sigmoid(logit), logit: logit, contributions: contributions };
+}
+
+// Round for display: 1 decimal below 10%, whole number otherwise.
+function displayRisk(prob) {
+  const pct = prob * 100;
+  return pct < 10 ? Math.round(pct * 10) / 10 : Math.round(pct);
+}
+
+// Band is applied to the DISPLAYED number so label and number always agree.
+function getRiskLevel(shown) {
+  if (shown >= BAND_HIGH) return 'high';
+  if (shown >= BAND_MODERATE) return 'moderate';
+  return 'low';
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.body.className = mode === 'beginner' ? 'beginner' : '';
+  document.getElementById('btn-beginner').className = 'mode-btn' + (mode === 'beginner' ? ' active' : '');
+  document.getElementById('btn-expert').className = 'mode-btn' + (mode === 'expert' ? ' active' : '');
+  document.getElementById('form-title').textContent = mode === 'beginner' ? 'Your Health Information' : 'Model Inputs (encoded values shown)';
+  onInput();
+}
+
+function onLangChange() {
+  currentLang = document.getElementById('lang-select').value;
+  onInput();
+}
+
+function applyPreset(name) {
+  const p = Object.assign({}, DEFAULTS, PRESETS[name] || {});
+  document.getElementById('age-years').value = p.ageYears;
+  document.getElementById('bmi').value = p.BMI;
+  RADIO_FEATURES.forEach(f => setRadio(f, p[f]));
+  onInput();
+}
+
+function onBmiUnits() {
+  const imperial = document.getElementById('bmi-units').value === 'imperial';
+  document.getElementById('bmi-height').placeholder = imperial ? 'inches' : 'cm';
+  document.getElementById('bmi-weight').placeholder = imperial ? 'lb' : 'kg';
+}
+
+function calcBmi() {
+  const imperial = document.getElementById('bmi-units').value === 'imperial';
+  const h = parseFloat(document.getElementById('bmi-height').value);
+  const w = parseFloat(document.getElementById('bmi-weight').value);
+  const msg = document.getElementById('bmi-calc-msg');
+  if (!(h > 0) || !(w > 0)) { msg.textContent = 'Enter height and weight.'; return; }
+  let bmi = imperial ? 703 * w / (h * h) : w / Math.pow(h / 100, 2);
+  if (!Number.isFinite(bmi)) { msg.textContent = 'Check the numbers; BMI was not changed.'; return; }
+  bmi = Math.round(bmi * 10) / 10;
+  const clamped = Math.min(60, Math.max(12, bmi));
+  document.getElementById('bmi').value = clamped;
+  msg.textContent = 'BMI ' + bmi + (clamped !== bmi ? ' (outside supported range; model uses BMI ' + clamped.toFixed(1) + ')'  : '');
+  onInput();
+}
+
+function getStatus(id, val) {
+  switch (id) {
+    case 'age-years':
+      if (val < 45) return ['Lower risk', 'normal'];
+      if (val < 65) return ['Moderate', 'warning'];
+      return ['Higher risk', 'danger'];
+    case 'bmi':
+      if (val < 18.5) return ['Underweight', 'warning'];
+      if (val < 25) return ['Normal', 'normal'];
+      if (val < 30) return ['Overweight', 'warning'];
+      return ['Obese', 'danger'];
+    default:
+      return ['--', 'normal'];
+  }
+}
+
+function factorText(f, values) {
+  const t = FEATURE_TEXT[f];
+  if (f === 'BMI') return 'BMI ' + values.BMI.toFixed(1);
+  if (f === 'GenHlth') return 'General health: ' + GENHLTH_LABELS[values.GenHlth];
+  if (f === 'Age') return 'Age ' + document.getElementById('age-years').value + ' (band ' + AGE_BANDS[values.Age - 1] + ')';
+  return values[f] ? t.yes : t.no;
+}
+
+function encodedText(f, values) {
+  if (f === 'Age') return 'Age=' + values.Age;
+  if (f === 'BMI') return 'BMI=' + values.BMI.toFixed(1);
+  return f + '=' + values[f];
+}
+
+function fmtSigned(x) { return (x >= 0 ? '+' : '') + x.toFixed(3); }
+
+function renderComparison(values) {
+  const rows = [];
+  FEATURES.forEach(f => {
+    const a = DATASET_AVG.noHeart[f];
+    const b = DATASET_AVG.heart[f];
+    let you, ca, cb;
+    if (f === 'BMI') {
+      you = values.BMI.toFixed(1); ca = a.toFixed(1); cb = b.toFixed(1);
+    } else if (f === 'GenHlth') {
+      you = values.GenHlth + ' (' + GENHLTH_LABELS[values.GenHlth] + ')'; ca = a.toFixed(2); cb = b.toFixed(2);
+    } else if (f === 'Age') {
+      you = 'band ' + values.Age + ' (' + AGE_BANDS[values.Age - 1] + ')';
+      ca = 'band ' + a.toFixed(1) + ' (~' + Math.round(bandToYears(a)) + ' y)';
+      cb = 'band ' + b.toFixed(1) + ' (~' + Math.round(bandToYears(b)) + ' y)';
+    } else if (f === 'Sex') {
+      you = values.Sex ? 'Male' : 'Female'; ca = Math.round(a * 100) + '% male'; cb = Math.round(b * 100) + '% male';
+    } else {
+      you = values[f] ? 'Yes' : 'No'; ca = Math.round(a * 100) + '% yes'; cb = Math.round(b * 100) + '% yes';
+    }
+    rows.push('<tr><td>' + FEATURE_TEXT[f].name + '</td><td class="you">' + you + '</td><td>' + ca + '</td><td>' + cb + '</td></tr>');
+  });
+  document.getElementById('compare-body').innerHTML = rows.join('');
+}
+
+function onInput() {
+  // Slider displays + status tags
+  const ageYears = parseInt(document.getElementById('age-years').value, 10);
+  document.getElementById('age-years-val').textContent = ageYears;
+  const bmiVal = parseFloat(document.getElementById('bmi').value);
+  document.getElementById('bmi-val').textContent = bmiVal.toFixed(1);
+  [['age-years', ageYears], ['bmi', bmiVal]].forEach(pair => {
+    const st = getStatus(pair[0], pair[1]);
+    const el = document.getElementById(pair[0] + '-status');
+    el.textContent = st[0];
+    el.className = 'status-tag ' + st[1];
+  });
+
+  const values = getValues();
+  document.getElementById('age-band-note').textContent = 'Model age band ' + values.Age + ' = ' + AGE_BANDS[values.Age - 1] + ' years';
+  FEATURES.forEach(f => { document.getElementById('enc-' + f).textContent = encodedText(f, values); });
+
+  // Run model
+  const res = predictRisk(values);
+  const shown = displayRisk(res.prob);
+  const level = getRiskLevel(shown);
+  const L = I18N[currentLang] || I18N.en;
+
+  document.getElementById('result').className = 'result-box ' + level;
+  const circle = document.getElementById('risk-circle');
+  circle.className = 'risk-circle ' + level;
+  circle.textContent = shown + '%';
+  const ringDeg = Math.min(Math.max(shown, 0), 100) / 100 * 360;
+  const ringColor = { low: '#48bb78', moderate: '#ecc94b', high: '#fc8181' }[level];
+  document.getElementById('risk-gauge').style.background = 'conic-gradient(' + ringColor + ' ' + ringDeg + 'deg, #e2e8f0 ' + ringDeg + 'deg)';
+
+  document.getElementById('risk-label').textContent = L.level[level];
+  document.getElementById('risk-sublabel').textContent = L.summary(shown);
+  document.getElementById('risk-technical').textContent = 'logit = ' + res.logit.toFixed(3) + ', p = ' + res.prob.toFixed(4) + ' (bands: Low < 5%, Moderate 5-10.5%, High >= 10.5%)';
+
+  const bar = document.getElementById('risk-bar');
+  bar.style.width = Math.min(shown, 100) + '%';
+  bar.style.background = ringColor;
+
+  // Factors sorted by contribution (largest push upward first)
+  const sorted = FEATURES.slice().sort((a, b) => res.contributions[b] - res.contributions[a]);
+  let html = '<h3>' + (currentMode === 'beginner' ? 'What affects your result (biggest first)' : 'Contributions: coef x z (sorted)') + '</h3>';
+  sorted.forEach(f => {
+    const c = res.contributions[f];
+    let cls, tag;
+    if (c > 0.05) { cls = 'risk'; tag = 'Raises'; }
+    else if (c < -0.05) { cls = 'ok'; tag = 'Lowers'; }
+    else { cls = 'neutral'; tag = 'Little effect'; }
+    let label;
+    if (currentMode === 'beginner') {
+      label = factorText(f, values);
+    } else {
+      label = encodedText(f, values) + '<span class="contrib">' + MODEL.coef[f] + ' x ' + ((values[f] - MODEL.mean[f]) / MODEL.scale[f]).toFixed(2) + ' = ' + fmtSigned(c) + '</span>';
+    }
+    html += '<div class="factor-item"><span>' + label + '</span><span class="tag ' + cls + '">' + tag + '</span></div>';
+  });
+  document.getElementById('factors').innerHTML = html;
+
+  // Next steps + disclaimer (translated)
+  document.getElementById('next-title').textContent = L.nextTitle;
+  document.getElementById('next-steps').innerHTML = '<p style="margin-top:6px">' + L.next[level] + '</p><p class="urgent">' + L.urgent + '</p>';
+  document.getElementById('disclaimer').textContent = L.disclaimer;
+
+  renderComparison(values);
+}
+
+// Initialize in Home mode with healthy defaults
+applyPreset('default');
+setMode('beginner');
+</script>
+
+</body>
+</html>
